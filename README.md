@@ -6,6 +6,7 @@ Lokale Entwicklungsumgebung für das Shopware-Plugin `MessengerHistoryDashboard`
 
 ```bash
 chmod +x scripts/*.sh
+cp -n shopware/.env.local.dist shopware/.env.local
 ./scripts/bootstrap-shopware.sh
 ```
 
