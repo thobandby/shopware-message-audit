@@ -1,0 +1,17 @@
+{
+  "main.js": {
+    "file": "assets/messenger-history-dashboard-BSB98a96.js",
+    "name": "messenger-history-dashboard",
+    "src": "main.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "module/mh-dashboard/components/mh-dashboard-settings-icon/index.js"
+    ]
+  },
+  "module/mh-dashboard/components/mh-dashboard-settings-icon/index.js": {
+    "file": "assets/index-M4f8anXa.js",
+    "name": "index",
+    "src": "module/mh-dashboard/components/mh-dashboard-settings-icon/index.js",
+    "isDynamicEntry": true
+  }
+}

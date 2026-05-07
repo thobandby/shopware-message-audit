@@ -1,0 +1,13 @@
+parameters:
+    level: 5
+    paths:
+        - src
+        - tests
+    parallel:
+        maximumNumberOfProcesses: 1
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        # Shopware specific or dynamic properties
+        - '#Property .* has no type(.*)specified.#'
+        - '#Property .* is never read, only written.#'
+        - '#Method .*::getCurrentOperator\(\) never returns null so it can be removed from the return type.#'

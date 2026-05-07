@@ -1,0 +1,35 @@
+{
+  "name": "local/messenger-history-dashboard",
+  "version": "1.0.0",
+  "description": "Shopware 6 plugin for Messenger audit, failure handling, and operational visibility",
+  "type": "shopware-platform-plugin",
+  "license": "MIT",
+  "homepage": "https://baumann-it-dienstleistungen.de",
+  "authors": [
+    {
+      "name": "Thorsten Baumann",
+      "email": "info@baumann-it-dienstleistungen.de",
+      "homepage": "https://baumann-it-dienstleistungen.de",
+      "role": "Developer"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "MessengerHistoryDashboard\\": "src/"
+    }
+  },
+  "extra": {
+    "shopware-plugin-class": "MessengerHistoryDashboard\\MessengerHistoryDashboard",
+    "label": {
+      "de-DE": "Messenger Audit",
+      "en-GB": "Messenger Audit"
+    }
+  },
+  "support": {
+    "email": "info@baumann-it-dienstleistungen.de",
+    "source": "https://baumann-it-dienstleistungen.de"
+  },
+  "require": {
+    "php": ">=8.2"
+  }
+}

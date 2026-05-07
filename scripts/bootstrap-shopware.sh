@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+SHOPWARE_VERSION="${SHOPWARE_VERSION:-6.6.10.0}"
+PROJECT_DIR="${PROJECT_DIR:-shopware}"
+IMAGE="${SHOPWARE_IMAGE:-ghcr.io/shopware/docker-dev:php8.3-node24-caddy}"
+SHOPWARE_HTTP_PORT="${SHOPWARE_HTTP_PORT:-18000}"
+SHOPWARE_ALT_HTTP_PORT="${SHOPWARE_ALT_HTTP_PORT:-18080}"
+SHOPWARE_XDEBUG_PORT="${SHOPWARE_XDEBUG_PORT:-19999}"
+SHOPWARE_PROXY_PORT="${SHOPWARE_PROXY_PORT:-19998}"
+SHOPWARE_ADMIN_WATCH_PORT="${SHOPWARE_ADMIN_WATCH_PORT:-15173}"
+SHOPWARE_STOREFRONT_WATCH_PORT="${SHOPWARE_STOREFRONT_WATCH_PORT:-15773}"
+
+mkdir -p "$PROJECT_DIR"
+
+if [ ! -f "$PROJECT_DIR/composer.json" ]; then
+  docker run --rm -it -v "$(pwd)/$PROJECT_DIR:/var/www/html" "$IMAGE" new-shopware-setup "$SHOPWARE_VERSION"
+fi
+
+(cd "$PROJECT_DIR" && env \
+  SHOPWARE_HTTP_PORT="$SHOPWARE_HTTP_PORT" \
+  SHOPWARE_ALT_HTTP_PORT="$SHOPWARE_ALT_HTTP_PORT" \
+  SHOPWARE_XDEBUG_PORT="$SHOPWARE_XDEBUG_PORT" \
+  SHOPWARE_PROXY_PORT="$SHOPWARE_PROXY_PORT" \
+  SHOPWARE_ADMIN_WATCH_PORT="$SHOPWARE_ADMIN_WATCH_PORT" \
+  SHOPWARE_STOREFRONT_WATCH_PORT="$SHOPWARE_STOREFRONT_WATCH_PORT" \
+  make up)
+(cd "$PROJECT_DIR" && make setup)
+
+./scripts/sync-plugin.sh
+./scripts/install-plugin.sh
+./scripts/seed-demo-data.sh
+
+echo "Storefront: http://127.0.0.1:${SHOPWARE_HTTP_PORT}"
+echo "Admin:      http://127.0.0.1:${SHOPWARE_HTTP_PORT}/admin"
+echo "Login:      admin / shopware"

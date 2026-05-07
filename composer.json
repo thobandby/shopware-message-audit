@@ -1,0 +1,65 @@
+{
+  "name": "mh/dashboard",
+  "description": "Development workspace for the Messenger Audit Shopware plugin",
+  "type": "project",
+  "homepage": "https://baumann-it-dienstleistungen.de",
+  "authors": [
+    {
+      "name": "Thorsten Baumann",
+      "email": "info@baumann-it-dienstleistungen.de",
+      "homepage": "https://baumann-it-dienstleistungen.de",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": "^8.1",
+    "symfony/messenger": "^6.0 || ^7.0",
+    "symfony/event-dispatcher": "^6.0 || ^7.0",
+    "symfony/routing": "^6.0 || ^7.0",
+    "symfony/http-foundation": "^6.0 || ^7.0",
+    "symfony/framework-bundle": "^6.0 || ^7.0",
+    "shopware/core": "^6.6"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.5",
+    "friendsofphp/php-cs-fixer": "^3.95",
+    "phpstan/phpstan": "^2.1",
+    "phpstan/phpdoc-parser": "^2.0",
+    "nunomaduro/phpinsights": "^2.0",
+    "bamarni/composer-bin-plugin": "^1.9"
+  },
+  "scripts": {
+    "cs-fix": "vendor/bin/php-cs-fixer fix --sequential",
+    "phpstan": "vendor/bin/phpstan analyse --no-progress --debug",
+    "phpinsights": "vendor/bin/phpinsights --config-path=phpinsights.php --disable-security-check --no-interaction --ansi",
+    "e2e-local": "bash scripts/run-local-e2e.sh",
+    "test": "vendor/bin/phpunit tests",
+    "quality": [
+      "@cs-fix",
+      "@phpstan",
+      "@phpinsights",
+      "@test"
+    ]
+  },
+  "autoload": {
+    "psr-4": {
+      "Thorsten\\MessengerHistory\\": "src/"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "symfony/runtime": true,
+      "bamarni/composer-bin-plugin": true
+    }
+  },
+  "support": {
+    "email": "info@baumann-it-dienstleistungen.de",
+    "source": "https://baumann-it-dienstleistungen.de"
+  },
+  "extra": {
+    "bamarni-bin": {
+      "bin-links": true,
+      "forward-command": false
+    }
+  }
+}

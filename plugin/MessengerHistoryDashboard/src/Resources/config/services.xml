@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <defaults autowire="true" autoconfigure="true" public="false"/>
+
+        <service id="MessengerHistoryDashboard\Core\Service\PayloadSerializer"/>
+        <service id="MessengerHistoryDashboard\Core\Service\PayloadHydrator"/>
+        <service id="MessengerHistoryDashboard\Core\Repository\MessageRepository"/>
+        <service id="MessengerHistoryDashboard\Core\Repository\TransitionRepository"/>
+        <service id="MessengerHistoryDashboard\Core\Repository\FailureRepository"/>
+        <service id="MessengerHistoryDashboard\Core\Repository\OperatorActionRepository"/>
+        <service id="MessengerHistoryDashboard\Core\Service\MessageAuditWriter"/>
+        <service id="MessengerHistoryDashboard\Core\Service\ReplayService"/>
+
+        <service id="MessengerHistoryDashboard\Core\Messenger\Middleware\DispatchAuditMiddleware">
+            <tag name="messenger.middleware"/>
+        </service>
+
+        <service id="MessengerHistoryDashboard\Core\Messenger\Subscriber\MessengerWorkerSubscriber">
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="MessengerHistoryDashboard\Storefront\Controller\AdminApiController" public="true">
+            <tag name="controller.service_arguments"/>
+        </service>
+
+        <service id="MessengerHistoryDashboard\Command\SeedDemoCommand">
+            <tag name="console.command"/>
+        </service>
+
+        <service id="MessengerHistoryDashboard\Core\Handler\SampleSuccessMessageHandler"/>
+        <service id="MessengerHistoryDashboard\Core\Handler\SampleFailureMessageHandler"/>
+    </services>
+</container>
