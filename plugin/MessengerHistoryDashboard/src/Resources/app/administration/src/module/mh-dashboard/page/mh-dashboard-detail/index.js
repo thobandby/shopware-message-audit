@@ -29,7 +29,11 @@ Component.register('mh-dashboard-detail', {
                         <dt>Name</dt><dd>{{ message.message_name }}</dd>
                         <dt>Bedeutung</dt><dd>{{ message.business_summary }}</dd>
                         <dt>Wirkung</dt><dd>{{ message.business_impact }}</dd>
+                        <dt>Business-Referenz</dt><dd>{{ message.business_reference || '-' }}</dd>
                         <dt>Klasse</dt><dd>{{ message.message_class }}</dd>
+                        <dt>Korrelation</dt><dd>{{ message.correlation_id || '-' }}</dd>
+                        <dt>Ursache</dt><dd>{{ message.causation_id || '-' }}</dd>
+                        <dt>Transport</dt><dd>{{ message.transport_name || '-' }}</dd>
                         <dt>Status</dt><dd>{{ message.status_label || message.status }}</dd>
                         <dt>Versuche</dt><dd>{{ message.retry_count }}</dd>
                     </dl>
@@ -92,7 +96,8 @@ Component.register('mh-dashboard-detail', {
             actionColumns: [
                 { property: 'created_at', label: 'Zeitpunkt' },
                 { property: 'action', label: 'Aktion' },
-                { property: 'reason', label: 'Grund' }
+                { property: 'reason', label: 'Grund' },
+                { property: 'operator_label', label: 'Operator' }
             ]
         };
     },
@@ -102,15 +107,15 @@ Component.register('mh-dashboard-detail', {
         },
 
         canRetry() {
-            return this.message && this.message.status === 'failed';
+            return this.message && this.message.allowed_actions && this.message.allowed_actions.includes('retry');
         },
 
         canQuarantine() {
-            return this.message && ['failed', 'received', 'dispatched'].includes(this.message.status);
+            return this.message && this.message.allowed_actions && this.message.allowed_actions.includes('quarantine');
         },
 
         canDismiss() {
-            return this.message && ['failed', 'received', 'dispatched', 'handled'].includes(this.message.status);
+            return this.message && this.message.allowed_actions && this.message.allowed_actions.includes('dismiss');
         }
     },
     created() {

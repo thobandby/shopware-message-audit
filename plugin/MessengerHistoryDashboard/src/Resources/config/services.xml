@@ -7,6 +7,8 @@
 
         <service id="MessengerHistoryDashboard\Core\Service\PayloadSerializer"/>
         <service id="MessengerHistoryDashboard\Core\Service\PayloadHydrator"/>
+        <service id="MessengerHistoryDashboard\Core\Operator\OperatorActionPolicy"/>
+        <service id="MessengerHistoryDashboard\Core\Operator\CurrentOperatorResolver"/>
         <service id="MessengerHistoryDashboard\Core\Repository\MessageRepository"/>
         <service id="MessengerHistoryDashboard\Core\Repository\TransitionRepository"/>
         <service id="MessengerHistoryDashboard\Core\Repository\FailureRepository"/>

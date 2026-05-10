@@ -6,11 +6,14 @@ namespace MessengerHistoryDashboard\Core\Repository;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
+use MessengerHistoryDashboard\Core\Operator\OperatorActionPolicy;
 
 final class MessageRepository
 {
-    public function __construct(private readonly Connection $connection)
-    {
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly OperatorActionPolicy $operatorActionPolicy
+    ) {
     }
 
     /**
@@ -23,7 +26,10 @@ final class MessageRepository
         int $limit = 25,
         ?string $topicGroup = null,
         ?\DateTimeImmutable $createdFrom = null,
-        ?\DateTimeImmutable $createdTo = null
+        ?\DateTimeImmutable $createdTo = null,
+        ?string $messageClass = null,
+        ?string $transportName = null,
+        ?string $businessReference = null
     ): array {
         $page = max(1, $page);
         $limit = max(1, min(100, $limit));
@@ -33,13 +39,26 @@ final class MessageRepository
 FROM mh_message m
 SQL;
 
-        $where = $this->buildWhereClause($status, $query, $topicGroup, $createdFrom, $createdTo);
+        $where = $this->buildWhereClause(
+            $status,
+            $query,
+            $topicGroup,
+            $createdFrom,
+            $createdTo,
+            $messageClass,
+            $transportName,
+            $businessReference
+        );
         $parameters = $where['parameters'];
 
         $selectSql = <<<'SQL'
 SELECT
     m.id,
     m.message_class,
+    m.correlation_id,
+    m.causation_id,
+    m.transport_name,
+    m.business_reference,
     SUBSTRING_INDEX(m.message_class, '\\', -1) AS message_name,
     CASE
         WHEN m.message_class LIKE '%\\Checkout\\Order\\%' THEN 'Bestellung'
@@ -105,7 +124,9 @@ SQL;
     public function find(string $id): array|false
     {
         $row = $this->connection->fetchAssociative(
-            'SELECT id, message_class, payload_json, status, retry_count, created_at, updated_at FROM mh_message WHERE id = :id',
+            'SELECT id, message_class, correlation_id, causation_id, transport_name, business_reference, payload_json, status, retry_count, created_at, updated_at
+             FROM mh_message
+             WHERE id = :id',
             ['id' => $id]
         );
 
@@ -116,8 +137,16 @@ SQL;
         return $this->mapRow($row);
     }
 
-    public function insertIfMissing(string $id, string $class, string $payloadJson, string $status): void
-    {
+    public function insertIfMissing(
+        string $id,
+        string $class,
+        string $payloadJson,
+        string $status,
+        ?string $correlationId = null,
+        ?string $causationId = null,
+        ?string $transportName = null,
+        ?string $businessReference = null
+    ): void {
         if ($this->connection->fetchOne('SELECT id FROM mh_message WHERE id = :id', ['id' => $id]) !== false) {
             return;
         }
@@ -126,6 +155,10 @@ SQL;
         $this->connection->insert('mh_message', [
             'id' => $id,
             'message_class' => $class,
+            'correlation_id' => $correlationId,
+            'causation_id' => $causationId,
+            'transport_name' => $transportName,
+            'business_reference' => $businessReference,
             'payload_json' => $payloadJson,
             'status' => $status,
             'retry_count' => 0,
@@ -148,6 +181,38 @@ SQL;
             'UPDATE mh_message SET retry_count = retry_count + 1, updated_at = :updatedAt WHERE id = :id',
             ['id' => $id, 'updatedAt' => (new \DateTimeImmutable())->format('Y-m-d H:i:s')]
         );
+    }
+
+    public function updateMetadata(
+        string $id,
+        ?string $correlationId,
+        ?string $causationId,
+        ?string $transportName,
+        ?string $businessReference
+    ): void {
+        $updates = ['updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s')];
+
+        if ($correlationId !== null && $correlationId !== '') {
+            $updates['correlation_id'] = $correlationId;
+        }
+
+        if ($causationId !== null && $causationId !== '') {
+            $updates['causation_id'] = $causationId;
+        }
+
+        if ($transportName !== null && $transportName !== '') {
+            $updates['transport_name'] = $transportName;
+        }
+
+        if ($businessReference !== null && $businessReference !== '') {
+            $updates['business_reference'] = $businessReference;
+        }
+
+        if (\count($updates) === 1) {
+            return;
+        }
+
+        $this->connection->update('mh_message', $updates, ['id' => $id]);
     }
 
     public function metrics(): array
@@ -263,7 +328,8 @@ SQL;
         $row['message_name'] = (string) ($row['message_name'] ?? $this->resolveMessageName($messageClass));
         $row['message_type'] = $messageType;
         $row['topic_group'] = $topicGroup;
-        $row['available_actions'] = $this->resolveAvailableActions((string) ($row['status'] ?? ''));
+        $row['allowed_actions'] = $this->operatorActionPolicy->allowedActions((string) ($row['status'] ?? ''));
+        $row['available_actions'] = $this->operatorActionPolicy->formatAllowedActions((string) ($row['status'] ?? ''));
         $row['status_label'] = $this->resolveStatusLabel((string) ($row['status'] ?? ''));
         $row['business_summary'] = $this->resolveBusinessSummary(
             $messageType,
@@ -313,16 +379,6 @@ SQL;
             str_contains($messageClass, '\\Content\\Category\\') => 'Inhalte',
             str_contains($messageClass, '\\Content\\Rule\\') => 'Inhalte',
             default => 'System',
-        };
-    }
-
-    private function resolveAvailableActions(string $status): string
-    {
-        return match ($status) {
-            'failed' => 'Erneut senden, Ausblenden, Erledigen',
-            'received', 'dispatched' => 'Ausblenden, Erledigen',
-            'handled' => 'Erledigen',
-            default => 'Details',
         };
     }
 
@@ -385,7 +441,10 @@ SQL;
         ?string $query,
         ?string $topicGroup,
         ?\DateTimeImmutable $createdFrom,
-        ?\DateTimeImmutable $createdTo
+        ?\DateTimeImmutable $createdTo,
+        ?string $messageClass,
+        ?string $transportName,
+        ?string $businessReference
     ): array {
         $conditions = [];
         $parameters = [];
@@ -406,8 +465,23 @@ SQL;
         }
 
         if ($query !== null && $query !== '') {
-            $conditions[] = "(m.id LIKE :query OR m.message_class LIKE :query)";
+            $conditions[] = '(m.id LIKE :query OR m.message_class LIKE :query OR m.business_reference LIKE :query)';
             $parameters['query'] = '%' . $query . '%';
+        }
+
+        if ($messageClass !== null && $messageClass !== '') {
+            $conditions[] = 'm.message_class LIKE :messageClass';
+            $parameters['messageClass'] = '%' . $messageClass . '%';
+        }
+
+        if ($transportName !== null && $transportName !== '') {
+            $conditions[] = 'm.transport_name LIKE :transportName';
+            $parameters['transportName'] = '%' . $transportName . '%';
+        }
+
+        if ($businessReference !== null && $businessReference !== '') {
+            $conditions[] = 'm.business_reference LIKE :businessReference';
+            $parameters['businessReference'] = '%' . $businessReference . '%';
         }
 
         if ($topicGroup !== null && $topicGroup !== '') {

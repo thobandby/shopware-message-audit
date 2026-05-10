@@ -32,8 +32,12 @@
     "cs-fix": "vendor/bin/php-cs-fixer fix --sequential",
     "phpstan": "vendor/bin/phpstan analyse --no-progress --debug",
     "phpinsights": "vendor/bin/phpinsights --config-path=phpinsights.php --disable-security-check --no-interaction --ansi",
+    "admin:build-local": "bash scripts/build-administration-local.sh",
+    "admin:cleanup-dev-tools": "bash scripts/cleanup-shopware-dev-tools.sh",
     "e2e-local": "bash scripts/run-local-e2e.sh",
     "test": "vendor/bin/phpunit tests",
+    "quality:all": "bash scripts/run-quality.sh",
+    "release:zip": "bash scripts/build-release.sh",
     "quality": [
       "@cs-fix",
       "@phpstan",
@@ -43,7 +47,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Thorsten\\MessengerHistory\\": "src/"
+      "MessengerHistoryDashboard\\": "plugin/MessengerHistoryDashboard/src/"
     }
   },
   "config": {

@@ -6,6 +6,9 @@ namespace MessengerHistoryDashboard\Core\Service;
 
 final class PayloadSerializer
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function serialize(object $message): array
     {
         if (method_exists($message, 'toArray')) {

@@ -6,6 +6,9 @@ namespace MessengerHistoryDashboard\Core\Service;
 
 final class PayloadHydrator
 {
+    /**
+     * @param array<string, mixed> $payload
+     */
     public function hydrate(string $className, array $payload): object
     {
         if (!class_exists($className)) {

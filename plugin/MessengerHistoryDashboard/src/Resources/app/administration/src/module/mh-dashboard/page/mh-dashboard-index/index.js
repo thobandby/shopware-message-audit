@@ -35,11 +35,23 @@ Component.register('mh-dashboard-index', {
                         </sw-button>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:minmax(220px,2fr) minmax(160px,1fr) minmax(220px,1.2fr) minmax(120px,0.8fr);gap:16px;align-items:end;margin-bottom:16px;">
+                    <div style="display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:16px;align-items:end;margin-bottom:16px;">
                         <sw-text-field
                             v-model:value="searchTerm"
                             label="Suche"
                             placeholder="Nachricht suchen">
+                        </sw-text-field>
+
+                        <sw-text-field
+                            v-model:value="messageClass"
+                            label="Klasse"
+                            placeholder="z. B. Order">
+                        </sw-text-field>
+
+                        <sw-text-field
+                            v-model:value="businessReference"
+                            label="Business-Referenz"
+                            placeholder="z. B. Bestellnummer">
                         </sw-text-field>
 
                         <sw-single-select
@@ -49,15 +61,27 @@ Component.register('mh-dashboard-index', {
                         </sw-single-select>
 
                         <sw-single-select
-                            v-model:value="selectedTimeRange"
-                            label="Zeitraum"
-                            :options="timeRangeOptions">
+                            v-model:value="selectedTopicGroup"
+                            label="Bereich"
+                            :options="topicGroupOptions">
                         </sw-single-select>
+
+                        <sw-text-field
+                            v-model:value="transportName"
+                            label="Transport"
+                            placeholder="z. B. async">
+                        </sw-text-field>
 
                         <sw-single-select
                             v-model:value="selectedLimit"
                             label="Pro Seite"
                             :options="limitOptions">
+                        </sw-single-select>
+
+                        <sw-single-select
+                            v-model:value="selectedTimeRange"
+                            label="Zeitraum"
+                            :options="timeRangeOptions">
                         </sw-single-select>
                     </div>
 
@@ -140,6 +164,9 @@ Component.register('mh-dashboard-index', {
             total: 0,
             page: 1,
             searchTerm: '',
+            messageClass: '',
+            transportName: '',
+            businessReference: '',
             selectedTopicGroup: '',
             selectedStatus: '',
             selectedTimeRange: '30d',
@@ -203,7 +230,10 @@ Component.register('mh-dashboard-index', {
                         limit: this.selectedLimit,
                         topicGroup: this.selectedTopicGroup,
                         createdFrom: range.createdFrom,
-                        createdTo: range.createdTo
+                        createdTo: range.createdTo,
+                        messageClass: this.messageClass.trim(),
+                        transportName: this.transportName.trim(),
+                        businessReference: this.businessReference.trim()
                     }),
                     this.mhDashboardApiService.loadMetrics()
                 ]);

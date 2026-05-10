@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MessengerHistoryDashboard\Core\Messenger\Middleware;
 
+use MessengerHistoryDashboard\Core\Messenger\Stamp\CorrelationIdStamp;
 use MessengerHistoryDashboard\Core\Messenger\Stamp\MessageUuidStamp;
 use MessengerHistoryDashboard\Core\Messenger\Util\MessageUuidResolver;
 use MessengerHistoryDashboard\Core\Service\MessageAuditWriter;
@@ -24,6 +25,10 @@ final class DispatchAuditMiddleware implements MiddlewareInterface
 
         if (!$envelope->last(MessageUuidStamp::class)) {
             $envelope = $envelope->with(new MessageUuidStamp($uuid));
+        }
+
+        if (!$envelope->last(CorrelationIdStamp::class)) {
+            $envelope = $envelope->with(new CorrelationIdStamp($uuid));
         }
 
         $this->writer->onDispatched($uuid, $envelope->getMessage(), $envelope);
