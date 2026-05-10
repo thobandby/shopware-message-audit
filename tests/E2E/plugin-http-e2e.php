@@ -161,8 +161,9 @@ final class PluginHttpE2ETest
 
         $this->log('Checking cleanup endpoint with no-op retention');
         $cleanup = $this->requestJson(
-            'GET',
-            '/api/_action/mh/messages?cleanupDays=365'
+            'POST',
+            '/api/_action/mh/messages/retention/cleanup',
+            ['days' => '365']
         );
         $this->assertSame('ok', $cleanup['status'] ?? null, 'cleanup status');
         $this->assertArrayHasKey($cleanup, 'deleted', 'cleanup response');

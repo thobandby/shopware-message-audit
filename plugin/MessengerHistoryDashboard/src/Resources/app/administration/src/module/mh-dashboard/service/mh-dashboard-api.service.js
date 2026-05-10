@@ -91,9 +91,11 @@ class MhDashboardApiService extends ApiService {
     }
 
     cleanupMessages(days = 30) {
-        return this.httpClient.get(`/_action/mh/messages?cleanupDays=${encodeURIComponent(days)}`, {
-            headers: this.getHeaders()
-        });
+        return this.httpClient.post(
+            '/_action/mh/messages/retention/cleanup',
+            { days },
+            { headers: this.getHeaders() }
+        );
     }
 }
 

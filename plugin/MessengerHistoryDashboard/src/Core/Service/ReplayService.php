@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace MessengerHistoryDashboard\Core\Service;
 
@@ -28,7 +30,7 @@ final class ReplayService
         }
 
         $payload = json_decode((string) $message['payload_json'], true, 512, JSON_THROW_ON_ERROR);
-        if (!is_array($payload)) {
+        if (!\is_array($payload)) {
             throw new \RuntimeException('Invalid payload for message: ' . $messageId);
         }
 

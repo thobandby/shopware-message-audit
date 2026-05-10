@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace MessengerHistoryDashboard\Core\Repository;
 
@@ -6,7 +8,9 @@ use Doctrine\DBAL\Connection;
 
 final class FailureRepository
 {
-    public function __construct(private readonly Connection $connection) {}
+    public function __construct(private readonly Connection $connection)
+    {
+    }
 
     public function insert(string $messageId, string $exceptionClass, string $errorMessage): void
     {

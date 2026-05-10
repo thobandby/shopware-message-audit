@@ -1,6 +1,6 @@
 {
   "name": "mh/dashboard",
-  "description": "Development workspace for the Messenger Audit Shopware plugin",
+  "description": "Shopware 6 plugin and release workspace for Messenger Audit, including local quality gates and E2E verification",
   "type": "project",
   "homepage": "https://baumann-it-dienstleistungen.de",
   "authors": [
@@ -8,7 +8,7 @@
       "name": "Thorsten Baumann",
       "email": "info@baumann-it-dienstleistungen.de",
       "homepage": "https://baumann-it-dienstleistungen.de",
-      "role": "Developer"
+      "role": "Author"
     }
   ],
   "require": {
@@ -54,7 +54,8 @@
   },
   "support": {
     "email": "info@baumann-it-dienstleistungen.de",
-    "source": "https://baumann-it-dienstleistungen.de"
+    "source": "https://baumann-it-dienstleistungen.de",
+    "docs": "https://baumann-it-dienstleistungen.de"
   },
   "extra": {
     "bamarni-bin": {

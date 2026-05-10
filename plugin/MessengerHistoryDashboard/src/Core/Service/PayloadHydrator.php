@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace MessengerHistoryDashboard\Core\Service;
 
@@ -20,7 +22,7 @@ final class PayloadHydrator
         $args = [];
         foreach ($constructor->getParameters() as $parameter) {
             $name = $parameter->getName();
-            if (array_key_exists($name, $payload)) {
+            if (\array_key_exists($name, $payload)) {
                 $args[] = $payload[$name];
             } elseif ($parameter->isDefaultValueAvailable()) {
                 $args[] = $parameter->getDefaultValue();

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace MessengerHistoryDashboard\Core\Service;
 
@@ -43,7 +45,7 @@ final class MessageAuditWriter
         $this->ensureMessageExists($uuid, $envelope->getMessage(), 'failed');
         $this->messageRepository->updateStatus($uuid, 'failed');
         $this->transitionRepository->insert($uuid, 'failed');
-        $this->failureRepository->insert($uuid, get_class($exception), $exception->getMessage());
+        $this->failureRepository->insert($uuid, \get_class($exception), $exception->getMessage());
     }
 
     public function recordRetry(string $messageId): void
@@ -56,7 +58,7 @@ final class MessageAuditWriter
     {
         $this->messageRepository->insertIfMissing(
             $uuid,
-            get_class($message),
+            \get_class($message),
             json_encode($this->payloadSerializer->serialize($message), JSON_THROW_ON_ERROR),
             $status
         );

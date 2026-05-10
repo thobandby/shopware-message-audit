@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace MessengerHistoryDashboard\Storefront\Controller;
 
@@ -13,7 +15,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route(defaults: ['_routeScope' => ['api']])]
+#[Route(defaults: ['_routeScope' => ['api'], '_acl' => ['system.plugin_maintain']])]
 final class AdminApiController extends AbstractController
 {
     public function __construct(
@@ -28,24 +30,12 @@ final class AdminApiController extends AbstractController
     #[Route(path: '/api/_action/mh/messages', name: 'api.action.mh.messages', methods: ['GET'])]
     public function list(Request $request, Context $context): JsonResponse
     {
-        $cleanupDays = $request->query->get('cleanupDays');
-        if ($cleanupDays !== null) {
-            $days = max(1, (int) $cleanupDays);
-            $cutoff = new \DateTimeImmutable(sprintf('-%d days', $days));
-
-            return new JsonResponse([
-                'status' => 'ok',
-                'cutoff' => $cutoff->format(DATE_ATOM),
-                'deleted' => $this->messageRepository->cleanupOlderThan($cutoff),
-            ]);
-        }
-
         $status = $request->query->get('status');
-        $status = is_string($status) && $status !== '' ? $status : null;
+        $status = \is_string($status) && $status !== '' ? $status : null;
         $query = $request->query->get('query');
-        $query = is_string($query) && trim($query) !== '' ? trim($query) : null;
+        $query = \is_string($query) && trim($query) !== '' ? trim($query) : null;
         $topicGroup = $request->query->get('topicGroup');
-        $topicGroup = is_string($topicGroup) && trim($topicGroup) !== '' ? trim($topicGroup) : null;
+        $topicGroup = \is_string($topicGroup) && trim($topicGroup) !== '' ? trim($topicGroup) : null;
         $page = max(1, (int) ($request->query->get('page') ?? 1));
         $limit = max(1, (int) ($request->query->get('limit') ?? 25));
         $createdFrom = $this->parseDateTime($request->query->get('createdFrom'));
@@ -56,11 +46,24 @@ final class AdminApiController extends AbstractController
         );
     }
 
+    #[Route(path: '/api/_action/mh/messages/retention/cleanup', name: 'api.action.mh.messages.retention.cleanup', methods: ['POST'])]
+    public function cleanup(Request $request, Context $context): JsonResponse
+    {
+        $days = max(1, (int) ($request->request->get('days') ?? 30));
+        $cutoff = new \DateTimeImmutable(\sprintf('-%d days', $days));
+
+        return new JsonResponse([
+            'status' => 'ok',
+            'cutoff' => $cutoff->format(DATE_ATOM),
+            'deleted' => $this->messageRepository->cleanupOlderThan($cutoff),
+        ]);
+    }
+
     #[Route(
         path: '/api/_action/mh/messages/{id}',
         name: 'api.action.mh.message.detail',
-        methods: ['GET'],
-        requirements: ['id' => '[0-9a-fA-F-]{36,64}']
+        requirements: ['id' => '[0-9a-fA-F-]{36,64}'],
+        methods: ['GET']
     )]
     public function detail(string $id, Context $context): JsonResponse
     {
@@ -75,8 +78,8 @@ final class AdminApiController extends AbstractController
     #[Route(
         path: '/api/_action/mh/messages/{id}/retry',
         name: 'api.action.mh.message.retry',
-        methods: ['POST'],
-        requirements: ['id' => '[0-9a-fA-F-]{36,64}']
+        requirements: ['id' => '[0-9a-fA-F-]{36,64}'],
+        methods: ['POST']
     )]
     public function retry(string $id, Request $request, Context $context): JsonResponse
     {
@@ -91,8 +94,8 @@ final class AdminApiController extends AbstractController
     #[Route(
         path: '/api/_action/mh/messages/{id}/quarantine',
         name: 'api.action.mh.message.quarantine',
-        methods: ['POST'],
-        requirements: ['id' => '[0-9a-fA-F-]{36,64}']
+        requirements: ['id' => '[0-9a-fA-F-]{36,64}'],
+        methods: ['POST']
     )]
     public function quarantine(string $id, Request $request, Context $context): JsonResponse
     {
@@ -105,8 +108,8 @@ final class AdminApiController extends AbstractController
     #[Route(
         path: '/api/_action/mh/messages/{id}/dismiss',
         name: 'api.action.mh.message.dismiss',
-        methods: ['POST'],
-        requirements: ['id' => '[0-9a-fA-F-]{36,64}']
+        requirements: ['id' => '[0-9a-fA-F-]{36,64}'],
+        methods: ['POST']
     )]
     public function dismiss(string $id, Request $request, Context $context): JsonResponse
     {
@@ -124,7 +127,7 @@ final class AdminApiController extends AbstractController
 
     private function parseDateTime(mixed $value, bool $endOfDay = false): ?\DateTimeImmutable
     {
-        if (!is_string($value) || trim($value) === '') {
+        if (!\is_string($value) || trim($value) === '') {
             return null;
         }
 

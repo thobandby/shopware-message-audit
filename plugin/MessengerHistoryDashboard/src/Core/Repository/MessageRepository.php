@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace MessengerHistoryDashboard\Core\Repository;
 
@@ -7,7 +9,9 @@ use Doctrine\DBAL\ParameterType;
 
 final class MessageRepository
 {
-    public function __construct(private readonly Connection $connection) {}
+    public function __construct(private readonly Connection $connection)
+    {
+    }
 
     /**
      * @return array{data:list<array<string, mixed>>, total:int, page:int, limit:int}
@@ -20,8 +24,7 @@ final class MessageRepository
         ?string $topicGroup = null,
         ?\DateTimeImmutable $createdFrom = null,
         ?\DateTimeImmutable $createdTo = null
-    ): array
-    {
+    ): array {
         $page = max(1, $page);
         $limit = max(1, min(100, $limit));
         $offset = ($page - 1) * $limit;
@@ -157,7 +160,7 @@ SQL;
             $status = (string) $row['status'];
             $count = (int) $row['cnt'];
             $result['total'] += $count;
-            if (array_key_exists($status, $result)) {
+            if (\array_key_exists($status, $result)) {
                 $result[$status] = $count;
             }
         }
@@ -249,19 +252,27 @@ SQL;
      */
     private function mapRow(array $row): array
     {
-        $row['message_name'] = (string) ($row['message_name'] ?? $this->resolveMessageName((string) ($row['message_class'] ?? '')));
-        $row['message_type'] = (string) ($row['message_type'] ?? $this->resolveMessageType((string) ($row['message_class'] ?? '')));
-        $row['topic_group'] = (string) ($row['topic_group'] ?? $this->resolveTopicGroup((string) ($row['message_class'] ?? '')));
+        $messageClass = (string) ($row['message_class'] ?? '');
+        $messageType = \array_key_exists('message_type', $row)
+            ? (string) $row['message_type']
+            : $this->resolveMessageType($messageClass);
+        $topicGroup = \array_key_exists('topic_group', $row)
+            ? (string) $row['topic_group']
+            : $this->resolveTopicGroup($messageClass);
+
+        $row['message_name'] = (string) ($row['message_name'] ?? $this->resolveMessageName($messageClass));
+        $row['message_type'] = $messageType;
+        $row['topic_group'] = $topicGroup;
         $row['available_actions'] = $this->resolveAvailableActions((string) ($row['status'] ?? ''));
         $row['status_label'] = $this->resolveStatusLabel((string) ($row['status'] ?? ''));
         $row['business_summary'] = $this->resolveBusinessSummary(
-            (string) ($row['message_type'] ?? ''),
-            (string) ($row['topic_group'] ?? '')
+            $messageType,
+            $topicGroup
         );
         $row['business_impact'] = $this->resolveBusinessImpact(
             (string) ($row['status'] ?? ''),
-            (string) ($row['message_type'] ?? ''),
-            (string) ($row['topic_group'] ?? '')
+            $messageType,
+            $topicGroup
         );
 
         return $row;

@@ -15,10 +15,10 @@ return [
     'ide' => 'phpstorm',
     'paths' => [
         __DIR__ . '/src',
+        __DIR__ . '/plugin/MessengerHistoryDashboard/src',
     ],
     'exclude' => [
         'bin',
-        'plugin',
         'public',
         'shopware',
         'var',
