@@ -23,6 +23,9 @@ final class FailureRepository
         ]);
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function findByMessageId(string $messageId): array
     {
         return $this->connection->fetchAllAssociative(

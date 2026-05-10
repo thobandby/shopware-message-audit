@@ -12,7 +12,10 @@ class MhDashboardApiService extends ApiService {
         limit = 25,
         topicGroup = '',
         createdFrom = '',
-        createdTo = ''
+        createdTo = '',
+        messageClass = '',
+        transportName = '',
+        businessReference = ''
     } = {}) {
         const params = new URLSearchParams();
 
@@ -37,6 +40,18 @@ class MhDashboardApiService extends ApiService {
 
         if (createdTo) {
             params.set('createdTo', createdTo);
+        }
+
+        if (messageClass) {
+            params.set('messageClass', messageClass);
+        }
+
+        if (transportName) {
+            params.set('transportName', transportName);
+        }
+
+        if (businessReference) {
+            params.set('businessReference', businessReference);
         }
 
         const query = params.toString();

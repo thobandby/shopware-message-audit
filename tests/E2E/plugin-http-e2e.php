@@ -77,14 +77,50 @@ final class PluginHttpE2ETest
         $this->assertContains($messageId, array_column($messageIdMatches, 'id'), 'message id filter');
 
         if ($messageClass !== '') {
-            $this->log('Filtering by message class fragment');
+            $this->log('Filtering by message class');
             $classFragment = $this->extractClassFragment($messageClass);
             $classMatches = $this->assertListResponse(
-                $this->requestJson('GET', '/api/_action/mh/messages?query=' . rawurlencode($classFragment)),
+                $this->requestJson('GET', '/api/_action/mh/messages?messageClass=' . rawurlencode($classFragment)),
                 1,
                 25
             );
-            $this->assertContains($messageId, array_column($classMatches, 'id'), 'message class filter');
+            if ($classMatches === []) {
+                throw new \RuntimeException('Expected at least one message for message class filter.');
+            }
+
+            foreach ($classMatches as $classMatch) {
+                $matchedClass = (string) ($classMatch['message_class'] ?? '');
+                if (!str_contains($matchedClass, $classFragment)) {
+                    throw new \RuntimeException(
+                        \sprintf('Expected message class filter match to contain "%s".', $classFragment)
+                    );
+                }
+            }
+        }
+
+        $businessReference = (string) ($message['business_reference'] ?? '');
+        if ($businessReference !== '') {
+            $this->log('Filtering by business reference');
+            $referenceMatches = $this->assertListResponse(
+                $this->requestJson(
+                    'GET',
+                    '/api/_action/mh/messages?businessReference=' . rawurlencode($businessReference)
+                ),
+                1,
+                25
+            );
+            if ($referenceMatches === []) {
+                throw new \RuntimeException('Expected at least one message for business reference filter.');
+            }
+
+            foreach ($referenceMatches as $referenceMatch) {
+                $matchedReference = (string) ($referenceMatch['business_reference'] ?? '');
+                if (!str_contains($matchedReference, $businessReference)) {
+                    throw new \RuntimeException(
+                        \sprintf('Expected business reference filter match to contain "%s".', $businessReference)
+                    );
+                }
+            }
         }
 
         if ($messageCreatedAt !== '') {
@@ -98,7 +134,14 @@ final class PluginHttpE2ETest
                 1,
                 25
             );
-            $this->assertContains($messageId, array_column($dateMatches, 'id'), 'created date filter');
+            if ($dateMatches === []) {
+                throw new \RuntimeException('Expected at least one message for created date filter.');
+            }
+
+            foreach ($dateMatches as $dateMatch) {
+                $matchedDate = substr((string) ($dateMatch['created_at'] ?? ''), 0, 10);
+                $this->assertSame($createdDate, $matchedDate, 'created date filter');
+            }
         }
 
         $this->log('Inspecting message ' . $messageId);
@@ -112,6 +155,9 @@ final class PluginHttpE2ETest
         $this->assertArrayHasKey($detail['message'], 'business_summary', 'detail message');
         $this->assertArrayHasKey($detail['message'], 'business_impact', 'detail message');
         $this->assertArrayHasKey($detail['message'], 'status_label', 'detail message');
+        $this->assertArrayHasKey($detail['message'], 'allowed_actions', 'detail message');
+        $this->assertArrayHasKey($detail['message'], 'correlation_id', 'detail message');
+        $this->assertArrayHasKey($detail['message'], 'transport_name', 'detail message');
 
         $this->log('Posting quarantine action');
         $this->requestJson(
@@ -151,6 +197,29 @@ final class PluginHttpE2ETest
         $this->assertContains('quarantine', $actionNames, 'actions');
         $this->assertContains('dismiss', $actionNames, 'actions');
         $this->assertContains('retry_now', $actionNames, 'actions');
+        $this->assertAnyOperatorMetadataPresent($actions);
+
+        $transportName = (string) ($afterActions['message']['transport_name'] ?? '');
+        if ($transportName !== '') {
+            $this->log('Filtering by transport name');
+            $transportMatches = $this->assertListResponse(
+                $this->requestJson('GET', '/api/_action/mh/messages?transportName=' . rawurlencode($transportName)),
+                1,
+                25
+            );
+            if ($transportMatches === []) {
+                throw new \RuntimeException('Expected at least one message for transport name filter.');
+            }
+
+            foreach ($transportMatches as $transportMatch) {
+                $matchedTransport = (string) ($transportMatch['transport_name'] ?? '');
+                if (!str_contains($matchedTransport, $transportName)) {
+                    throw new \RuntimeException(
+                        \sprintf('Expected transport name filter match to contain "%s".', $transportName)
+                    );
+                }
+            }
+        }
 
         $this->log('Checking metrics endpoint');
         $metrics = $this->requestJson('GET', '/api/_action/mh/metrics');
@@ -263,6 +332,26 @@ final class PluginHttpE2ETest
         }
 
         return $decoded;
+    }
+
+    /**
+     * @param array<int, mixed> $actions
+     */
+    private function assertAnyOperatorMetadataPresent(array $actions): void
+    {
+        foreach ($actions as $action) {
+            if (
+                \is_array($action)
+                && (
+                    (($action['operator_label'] ?? null) !== null && (string) $action['operator_label'] !== '')
+                    || (($action['operator_type'] ?? null) !== null && (string) $action['operator_type'] !== '')
+                )
+            ) {
+                return;
+            }
+        }
+
+        throw new \RuntimeException('Expected at least one operator action with operator metadata.');
     }
 
     /**
