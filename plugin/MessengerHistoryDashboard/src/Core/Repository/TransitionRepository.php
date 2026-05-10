@@ -23,7 +23,7 @@ final class TransitionRepository
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * @return list<array<string, scalar|null>>
      */
     public function findByMessageId(string $messageId): array
     {

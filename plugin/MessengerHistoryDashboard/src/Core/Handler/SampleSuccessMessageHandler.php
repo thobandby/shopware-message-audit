@@ -12,6 +12,8 @@ final class SampleSuccessMessageHandler
 {
     public function __invoke(SampleSuccessMessage $message): void
     {
+        unset($message);
+
         // success
     }
 }

@@ -12,6 +12,9 @@ final class SampleFailureMessage
     ) {
     }
 
+    /**
+     * @return array{reference:string, text:string}
+     */
     public function toArray(): array
     {
         return ['reference' => $this->reference, 'text' => $this->text];

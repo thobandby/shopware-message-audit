@@ -23,11 +23,11 @@ final class DispatchAuditMiddleware implements MiddlewareInterface
     {
         $uuid = MessageUuidResolver::resolve($envelope);
 
-        if (!$envelope->last(MessageUuidStamp::class)) {
+        if (! $envelope->last(MessageUuidStamp::class)) {
             $envelope = $envelope->with(new MessageUuidStamp($uuid));
         }
 
-        if (!$envelope->last(CorrelationIdStamp::class)) {
+        if (! $envelope->last(CorrelationIdStamp::class)) {
             $envelope = $envelope->with(new CorrelationIdStamp($uuid));
         }
 

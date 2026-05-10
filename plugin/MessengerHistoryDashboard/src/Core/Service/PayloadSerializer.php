@@ -7,7 +7,7 @@ namespace MessengerHistoryDashboard\Core\Service;
 final class PayloadSerializer
 {
     /**
-     * @return array<string, mixed>
+     * @return array<string, array<array-key, scalar|null>|scalar|null>
      */
     public function serialize(object $message): array
     {

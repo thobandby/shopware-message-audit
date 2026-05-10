@@ -16,13 +16,13 @@ final class Migration1725000005AddMhMessageListIndexes extends MigrationStep
 
     public function update(Connection $connection): void
     {
-        if (!$this->hasIndex($connection, 'mh_message', 'idx.mh_message.created_at')) {
+        if (! $this->hasIndex($connection, 'mh_message', 'idx.mh_message.created_at')) {
             $connection->executeStatement(
                 'CREATE INDEX `idx.mh_message.created_at` ON `mh_message` (`created_at`)'
             );
         }
 
-        if (!$this->hasIndex($connection, 'mh_message', 'idx.mh_message.status_created_at')) {
+        if (! $this->hasIndex($connection, 'mh_message', 'idx.mh_message.status_created_at')) {
             $connection->executeStatement(
                 'CREATE INDEX `idx.mh_message.status_created_at` ON `mh_message` (`status`, `created_at`)'
             );
@@ -31,6 +31,7 @@ final class Migration1725000005AddMhMessageListIndexes extends MigrationStep
 
     public function updateDestructive(Connection $connection): void
     {
+        unset($connection);
     }
 
     private function hasIndex(Connection $connection, string $tableName, string $indexName): bool

@@ -7,11 +7,11 @@ namespace MessengerHistoryDashboard\Core\Service;
 final class PayloadHydrator
 {
     /**
-     * @param array<string, mixed> $payload
+     * @param array<string, array<array-key, scalar|null>|scalar|null> $payload
      */
     public function hydrate(string $className, array $payload): object
     {
-        if (!class_exists($className)) {
+        if (! class_exists($className)) {
             throw new \RuntimeException('Message class not found: ' . $className);
         }
 

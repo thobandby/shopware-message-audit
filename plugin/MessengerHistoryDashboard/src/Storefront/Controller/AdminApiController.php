@@ -34,7 +34,7 @@ final class AdminApiController extends AbstractController
     }
 
     #[Route(path: '/api/_action/mh/messages', name: 'api.action.mh.messages', methods: ['GET'])]
-    public function list(Request $request, Context $context): JsonResponse
+    public function list(Request $request): JsonResponse
     {
         $status = $request->query->get('status');
         $status = \is_string($status) && $status !== '' ? $status : null;
@@ -67,7 +67,7 @@ final class AdminApiController extends AbstractController
     }
 
     #[Route(path: '/api/_action/mh/messages/retention/cleanup', name: 'api.action.mh.messages.retention.cleanup', methods: ['POST'])]
-    public function cleanup(Request $request, Context $context): JsonResponse
+    public function cleanup(Request $request): JsonResponse
     {
         $days = max(1, (int) ($request->request->get('days') ?? 30));
         $cutoff = new \DateTimeImmutable(\sprintf('-%d days', $days));
@@ -85,7 +85,7 @@ final class AdminApiController extends AbstractController
         requirements: ['id' => '[0-9a-fA-F-]{36,64}'],
         methods: ['GET']
     )]
-    public function detail(string $id, Context $context): JsonResponse
+    public function detail(string $id): JsonResponse
     {
         $message = $this->messageRepository->find($id);
 
@@ -163,13 +163,13 @@ final class AdminApiController extends AbstractController
     }
 
     #[Route(path: '/api/_action/mh/metrics', name: 'api.action.mh.metrics', methods: ['GET'])]
-    public function metrics(Context $context): JsonResponse
+    public function metrics(): JsonResponse
     {
         return new JsonResponse($this->messageRepository->metrics());
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, array<array-key, scalar|null>|list<string>|scalar|null>
      */
     private function requireMessageWithAllowedAction(string $id, string $action): array
     {
@@ -181,7 +181,7 @@ final class AdminApiController extends AbstractController
 
         $status = (string) ($message['status'] ?? '');
 
-        if (!$this->operatorActionPolicy->isAllowed($action, $status)) {
+        if (! $this->operatorActionPolicy->isAllowed($action, $status)) {
             throw new BadRequestHttpException(
                 \sprintf('Action "%s" is not allowed for status "%s".', $action, $status)
             );
@@ -190,9 +190,9 @@ final class AdminApiController extends AbstractController
         return $message;
     }
 
-    private function parseDateTime(mixed $value, bool $endOfDay = false): ?\DateTimeImmutable
+    private function parseDateTime(string|int|float|bool|array|null $value, bool $endOfDay = false): ?\DateTimeImmutable
     {
-        if (!\is_string($value) || trim($value) === '') {
+        if (! \is_string($value) || trim($value) === '') {
             return null;
         }
 
@@ -209,6 +209,12 @@ final class AdminApiController extends AbstractController
     {
         $value = $request->query->get($name);
 
-        return \is_string($value) && trim($value) !== '' ? trim($value) : null;
+        if (! \is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
     }
 }

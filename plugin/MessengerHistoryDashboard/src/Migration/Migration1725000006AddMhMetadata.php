@@ -48,6 +48,7 @@ final class Migration1725000006AddMhMetadata extends MigrationStep
 
     public function updateDestructive(Connection $connection): void
     {
+        unset($connection);
     }
 
     private function createIndexIfMissing(

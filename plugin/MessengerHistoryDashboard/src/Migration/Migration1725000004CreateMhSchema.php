@@ -101,25 +101,25 @@ final class Migration1725000004CreateMhSchema extends MigrationStep
             'ALTER TABLE `mh_operator_action` ADD COLUMN IF NOT EXISTS `operator_email` VARCHAR(255) NULL'
         );
 
-        if (!$this->hasIndex($connection, 'mh_message', 'idx.mh_message.status')) {
+        if (! $this->hasIndex($connection, 'mh_message', 'idx.mh_message.status')) {
             $connection->executeStatement(
                 'CREATE INDEX `idx.mh_message.status` ON `mh_message` (`status`)'
             );
         }
 
-        if (!$this->hasIndex($connection, 'mh_message', 'idx.mh_message.correlation_id')) {
+        if (! $this->hasIndex($connection, 'mh_message', 'idx.mh_message.correlation_id')) {
             $connection->executeStatement(
                 'CREATE INDEX `idx.mh_message.correlation_id` ON `mh_message` (`correlation_id`)'
             );
         }
 
-        if (!$this->hasIndex($connection, 'mh_message', 'idx.mh_message.transport_name')) {
+        if (! $this->hasIndex($connection, 'mh_message', 'idx.mh_message.transport_name')) {
             $connection->executeStatement(
                 'CREATE INDEX `idx.mh_message.transport_name` ON `mh_message` (`transport_name`)'
             );
         }
 
-        if (!$this->hasIndex($connection, 'mh_message', 'idx.mh_message.business_reference')) {
+        if (! $this->hasIndex($connection, 'mh_message', 'idx.mh_message.business_reference')) {
             $connection->executeStatement(
                 'CREATE INDEX `idx.mh_message.business_reference` ON `mh_message` (`business_reference`)'
             );
@@ -128,6 +128,7 @@ final class Migration1725000004CreateMhSchema extends MigrationStep
 
     public function updateDestructive(Connection $connection): void
     {
+        unset($connection);
     }
 
     private function hasIndex(Connection $connection, string $tableName, string $indexName): bool

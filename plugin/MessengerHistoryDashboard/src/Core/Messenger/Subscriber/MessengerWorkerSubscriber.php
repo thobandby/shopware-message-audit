@@ -18,6 +18,9 @@ final class MessengerWorkerSubscriber implements EventSubscriberInterface
     ) {
     }
 
+    /**
+     * @return array<class-string, string>
+     */
     public static function getSubscribedEvents(): array
     {
         return [

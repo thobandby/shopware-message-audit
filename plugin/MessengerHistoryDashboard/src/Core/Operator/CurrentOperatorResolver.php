@@ -18,7 +18,7 @@ final class CurrentOperatorResolver
     {
         $source = $context->getSource();
 
-        if (!$source instanceof AdminApiSource) {
+        if (! $source instanceof AdminApiSource) {
             return new OperatorIdentity(null, 'system', 'system');
         }
 
@@ -33,7 +33,7 @@ final class CurrentOperatorResolver
                 $labelParts = array_filter([
                     $user['first_name'] ?? null,
                     $user['last_name'] ?? null,
-                ], static fn (mixed $value): bool => \is_string($value) && trim($value) !== '');
+                ], static fn (?string $value): bool => $value !== null && trim($value) !== '');
                 $label = trim(implode(' ', $labelParts));
 
                 if ($label === '') {

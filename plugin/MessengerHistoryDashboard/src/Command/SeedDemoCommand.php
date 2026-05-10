@@ -22,6 +22,8 @@ final class SeedDemoCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        unset($input);
+
         $this->messageBus->dispatch(new SampleSuccessMessage('demo-success-1', 'Demo success'));
         $this->messageBus->dispatch(new SampleSuccessMessage('demo-success-2', 'Demo success'));
 

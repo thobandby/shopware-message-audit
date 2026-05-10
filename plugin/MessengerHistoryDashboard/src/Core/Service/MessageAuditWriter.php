@@ -120,7 +120,7 @@ final class MessageAuditWriter
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param array<string, array<array-key, scalar|null>|scalar|null> $payload
      */
     private function resolveBusinessReference(array $payload): ?string
     {

@@ -6,9 +6,6 @@ namespace MessengerHistoryDashboard\Core\Operator;
 
 final class OperatorActionPolicy
 {
-    /**
-     * @var array<string, list<string>>
-     */
     private const ALLOWED_ACTIONS = [
         'failed' => ['retry', 'quarantine', 'dismiss'],
         'received' => ['quarantine', 'dismiss'],

@@ -17,7 +17,12 @@ final class MessageRepository
     }
 
     /**
-     * @return array{data:list<array<string, mixed>>, total:int, page:int, limit:int}
+     * @return array{
+     *     data:list<array<string, array<array-key, scalar|null>|list<string>|scalar|null>>,
+     *     total:int,
+     *     page:int,
+     *     limit:int
+     * }
      */
     public function list(
         ?string $status = null,
@@ -215,6 +220,9 @@ SQL;
         $this->connection->update('mh_message', $updates, ['id' => $id]);
     }
 
+    /**
+     * @return array{total:int, failed:int, handled:int, received:int, dispatched:int}
+     */
     public function metrics(): array
     {
         $rows = $this->connection->fetchAllAssociative('SELECT status, COUNT(*) AS cnt FROM mh_message GROUP BY status');
@@ -301,9 +309,9 @@ SQL;
     }
 
     /**
-     * @param list<array<string, mixed>> $rows
+     * @param list<array<string, scalar|null>> $rows
      *
-     * @return list<array<string, mixed>>
+     * @return list<array<string, array<array-key, scalar|null>|list<string>|scalar|null>>
      */
     private function mapRows(array $rows): array
     {
@@ -311,9 +319,9 @@ SQL;
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param array<string, scalar|null> $row
      *
-     * @return array<string, mixed>
+     * @return array<string, array<array-key, scalar|null>|list<string>|scalar|null>
      */
     private function mapRow(array $row): array
     {
@@ -348,7 +356,7 @@ SQL;
     {
         $segments = explode('\\', $messageClass);
 
-        return end($segments) ?: $messageClass;
+        return $segments[\count($segments) - 1];
     }
 
     private function resolveMessageType(string $messageClass): string
@@ -434,7 +442,7 @@ SQL;
     }
 
     /**
-     * @return array{sql:string, parameters:array<string, mixed>}
+     * @return array{sql:string, parameters:array<string, int|string>}
      */
     private function buildWhereClause(
         ?string $status,
