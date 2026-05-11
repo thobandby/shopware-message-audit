@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MessengerHistoryDashboard\Core\Service;
 
+use MessengerHistoryDashboard\Core\Exception\UnableToHydrateMessage;
+
 final class PayloadHydrator
 {
     /**
@@ -12,7 +14,7 @@ final class PayloadHydrator
     public function hydrate(string $className, array $payload): object
     {
         if (! class_exists($className)) {
-            throw new \RuntimeException('Message class not found: ' . $className);
+            throw new UnableToHydrateMessage('Message class not found: ' . $className);
         }
 
         $reflectionClass = new \ReflectionClass($className);
@@ -30,7 +32,7 @@ final class PayloadHydrator
             } elseif ($parameter->isDefaultValueAvailable()) {
                 $args[] = $parameter->getDefaultValue();
             } else {
-                throw new \RuntimeException('Cannot hydrate message. Missing payload field: ' . $name);
+                throw new UnableToHydrateMessage('Cannot hydrate message. Missing payload field: ' . $name);
             }
         }
 

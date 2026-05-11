@@ -107,19 +107,19 @@ Component.register('mh-dashboard-detail', {
         },
 
         canRetry() {
-            return this.message && this.message.allowed_actions && this.message.allowed_actions.includes('retry');
+            return this.message?.allowed_actions?.includes('retry') ?? false;
         },
 
         canQuarantine() {
-            return this.message && this.message.allowed_actions && this.message.allowed_actions.includes('quarantine');
+            return this.message?.allowed_actions?.includes('quarantine') ?? false;
         },
 
         canDismiss() {
-            return this.message && this.message.allowed_actions && this.message.allowed_actions.includes('dismiss');
+            return this.message?.allowed_actions?.includes('dismiss') ?? false;
         }
     },
     created() {
-        void this.loadDetail();
+        this.loadDetail();
     },
     methods: {
         async loadDetail() {
@@ -133,7 +133,7 @@ Component.register('mh-dashboard-detail', {
             } catch (error) {
                 this.createNotificationError({
                     title: 'Messenger Audit',
-                    message: 'Die Details konnten nicht geladen werden.'
+                    message: this.resolveErrorMessage(error, 'Die Details konnten nicht geladen werden.')
                 });
             }
         },
@@ -156,9 +156,13 @@ Component.register('mh-dashboard-detail', {
             } catch (error) {
                 this.createNotificationError({
                     title: 'Messenger Audit',
-                    message: 'Die Aktion konnte nicht ausgeführt werden.'
+                    message: this.resolveErrorMessage(error, 'Die Aktion konnte nicht ausgeführt werden.')
                 });
             }
+        },
+
+        resolveErrorMessage(error, fallbackMessage) {
+            return error?.response?.data?.errors?.[0]?.detail || error?.message || fallbackMessage;
         },
 
         goBack() {

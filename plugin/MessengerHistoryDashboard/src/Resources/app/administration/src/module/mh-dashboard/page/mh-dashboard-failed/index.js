@@ -156,7 +156,7 @@ Component.register('mh-dashboard-failed', {
         };
     },
     created() {
-        void this.loadMessages();
+        this.loadMessages();
     },
     methods: {
         async loadMessages() {
@@ -185,7 +185,7 @@ Component.register('mh-dashboard-failed', {
 
                 this.createNotificationError({
                     title: 'Messenger Audit',
-                    message: 'Die fehlgeschlagenen Nachrichten konnten nicht geladen werden.'
+                    message: this.resolveErrorMessage(error, 'Die fehlgeschlagenen Nachrichten konnten nicht geladen werden.')
                 });
             } finally {
                 this.isLoading = false;
@@ -210,19 +210,23 @@ Component.register('mh-dashboard-failed', {
             } catch (error) {
                 this.createNotificationError({
                     title: 'Messenger Audit',
-                    message: 'Die Aktion konnte nicht ausgeführt werden.'
+                    message: this.resolveErrorMessage(error, 'Die Aktion konnte nicht ausgeführt werden.')
                 });
             }
         },
 
         onPageChange(page) {
             this.page = page;
-            void this.loadMessages();
+            this.loadMessages();
         },
 
         applyFilters() {
             this.page = 1;
-            void this.loadMessages();
+            this.loadMessages();
+        },
+
+        resolveErrorMessage(error, fallbackMessage) {
+            return error?.response?.data?.errors?.[0]?.detail || error?.message || fallbackMessage;
         },
 
         resolveTimeRange() {

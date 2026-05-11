@@ -10,6 +10,9 @@ use MessengerHistoryDashboard\Core\Operator\OperatorActionPolicy;
 
 final class MessageRepository
 {
+    private const DATETIME_FORMAT = 'Y-m-d H:i:s';
+    private const REVIEW_LABEL = 'Prüfen';
+
     public function __construct(
         private readonly Connection $connection,
         private readonly OperatorActionPolicy $operatorActionPolicy
@@ -24,20 +27,10 @@ final class MessageRepository
      *     limit:int
      * }
      */
-    public function list(
-        ?string $status = null,
-        ?string $query = null,
-        int $page = 1,
-        int $limit = 25,
-        ?string $topicGroup = null,
-        ?\DateTimeImmutable $createdFrom = null,
-        ?\DateTimeImmutable $createdTo = null,
-        ?string $messageClass = null,
-        ?string $transportName = null,
-        ?string $businessReference = null
-    ): array {
-        $page = max(1, $page);
-        $limit = max(1, min(100, $limit));
+    public function list(MessageListCriteria $criteria): array
+    {
+        $page = max(1, $criteria->page);
+        $limit = max(1, min(100, $criteria->limit));
         $offset = ($page - 1) * $limit;
 
         $baseSql = <<<'SQL'
@@ -45,14 +38,7 @@ FROM mh_message m
 SQL;
 
         $where = $this->buildWhereClause(
-            $status,
-            $query,
-            $topicGroup,
-            $createdFrom,
-            $createdTo,
-            $messageClass,
-            $transportName,
-            $businessReference
+            $criteria
         );
         $parameters = $where['parameters'];
 
@@ -142,28 +128,20 @@ SQL;
         return $this->mapRow($row);
     }
 
-    public function insertIfMissing(
-        string $id,
-        string $class,
-        string $payloadJson,
-        string $status,
-        ?string $correlationId = null,
-        ?string $causationId = null,
-        ?string $transportName = null,
-        ?string $businessReference = null
-    ): void {
+    public function insertIfMissing(string $id, string $class, string $payloadJson, string $status, MessageMetadata $metadata): void
+    {
         if ($this->connection->fetchOne('SELECT id FROM mh_message WHERE id = :id', ['id' => $id]) !== false) {
             return;
         }
 
-        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        $now = (new \DateTimeImmutable())->format(self::DATETIME_FORMAT);
         $this->connection->insert('mh_message', [
             'id' => $id,
             'message_class' => $class,
-            'correlation_id' => $correlationId,
-            'causation_id' => $causationId,
-            'transport_name' => $transportName,
-            'business_reference' => $businessReference,
+            'correlation_id' => $metadata->correlationId,
+            'causation_id' => $metadata->causationId,
+            'transport_name' => $metadata->transportName,
+            'business_reference' => $metadata->businessReference,
             'payload_json' => $payloadJson,
             'status' => $status,
             'retry_count' => 0,
@@ -176,7 +154,7 @@ SQL;
     {
         $this->connection->update('mh_message', [
             'status' => $status,
-            'updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+            'updated_at' => (new \DateTimeImmutable())->format(self::DATETIME_FORMAT),
         ], ['id' => $id]);
     }
 
@@ -184,33 +162,28 @@ SQL;
     {
         $this->connection->executeStatement(
             'UPDATE mh_message SET retry_count = retry_count + 1, updated_at = :updatedAt WHERE id = :id',
-            ['id' => $id, 'updatedAt' => (new \DateTimeImmutable())->format('Y-m-d H:i:s')]
+            ['id' => $id, 'updatedAt' => (new \DateTimeImmutable())->format(self::DATETIME_FORMAT)]
         );
     }
 
-    public function updateMetadata(
-        string $id,
-        ?string $correlationId,
-        ?string $causationId,
-        ?string $transportName,
-        ?string $businessReference
-    ): void {
-        $updates = ['updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s')];
+    public function updateMetadata(string $id, MessageMetadata $metadata): void
+    {
+        $updates = ['updated_at' => (new \DateTimeImmutable())->format(self::DATETIME_FORMAT)];
 
-        if ($correlationId !== null && $correlationId !== '') {
-            $updates['correlation_id'] = $correlationId;
+        if ($metadata->correlationId !== null && $metadata->correlationId !== '') {
+            $updates['correlation_id'] = $metadata->correlationId;
         }
 
-        if ($causationId !== null && $causationId !== '') {
-            $updates['causation_id'] = $causationId;
+        if ($metadata->causationId !== null && $metadata->causationId !== '') {
+            $updates['causation_id'] = $metadata->causationId;
         }
 
-        if ($transportName !== null && $transportName !== '') {
-            $updates['transport_name'] = $transportName;
+        if ($metadata->transportName !== null && $metadata->transportName !== '') {
+            $updates['transport_name'] = $metadata->transportName;
         }
 
-        if ($businessReference !== null && $businessReference !== '') {
-            $updates['business_reference'] = $businessReference;
+        if ($metadata->businessReference !== null && $metadata->businessReference !== '') {
+            $updates['business_reference'] = $metadata->businessReference;
         }
 
         if (\count($updates) === 1) {
@@ -246,7 +219,7 @@ SQL;
      */
     public function cleanupOlderThan(\DateTimeImmutable $cutoff): array
     {
-        $formattedCutoff = $cutoff->format('Y-m-d H:i:s');
+        $formattedCutoff = $cutoff->format(self::DATETIME_FORMAT);
 
         $messages = (int) $this->connection->fetchOne(
             'SELECT COUNT(*) FROM mh_message WHERE created_at < :cutoff',
@@ -431,12 +404,12 @@ SQL;
         }
 
         return match ($messageType) {
-            'Bestellung', 'Zahlung', 'Webhook', 'PayPal', 'E-Mail' => 'Prüfen',
+            'Bestellung', 'Zahlung', 'Webhook', 'PayPal', 'E-Mail' => self::REVIEW_LABEL,
             'Indexer', 'Ablauf' => 'Beobachten',
             default => match ($topicGroup) {
-                'Bestellungen', 'Zahlungen', 'Kommunikation', 'Integrationen' => 'Prüfen',
+                'Bestellungen', 'Zahlungen', 'Kommunikation', 'Integrationen' => self::REVIEW_LABEL,
                 'Inhalte', 'System' => 'Beobachten',
-                default => 'Prüfen',
+                default => self::REVIEW_LABEL,
             },
         };
     }
@@ -444,56 +417,48 @@ SQL;
     /**
      * @return array{sql:string, parameters:array<string, int|string>}
      */
-    private function buildWhereClause(
-        ?string $status,
-        ?string $query,
-        ?string $topicGroup,
-        ?\DateTimeImmutable $createdFrom,
-        ?\DateTimeImmutable $createdTo,
-        ?string $messageClass,
-        ?string $transportName,
-        ?string $businessReference
-    ): array {
+    private function buildWhereClause(MessageListCriteria $criteria): array
+    {
         $conditions = [];
         $parameters = [];
 
-        if ($status !== null) {
+        if ($criteria->status !== null) {
             $conditions[] = 'm.status = :status';
-            $parameters['status'] = $status;
+            $parameters['status'] = $criteria->status;
         }
 
-        if ($createdFrom !== null) {
+        if ($criteria->createdFrom !== null) {
             $conditions[] = 'm.created_at >= :createdFrom';
-            $parameters['createdFrom'] = $createdFrom->format('Y-m-d H:i:s');
+            $parameters['createdFrom'] = $criteria->createdFrom->format(self::DATETIME_FORMAT);
         }
 
-        if ($createdTo !== null) {
+        if ($criteria->createdTo !== null) {
             $conditions[] = 'm.created_at <= :createdTo';
-            $parameters['createdTo'] = $createdTo->format('Y-m-d H:i:s');
+            $parameters['createdTo'] = $criteria->createdTo->format(self::DATETIME_FORMAT);
         }
 
-        if ($query !== null && $query !== '') {
+        if ($criteria->query !== null && $criteria->query !== '') {
             $conditions[] = '(m.id LIKE :query OR m.message_class LIKE :query OR m.business_reference LIKE :query)';
-            $parameters['query'] = '%' . $query . '%';
+            $parameters['query'] = '%' . $criteria->query . '%';
         }
 
-        if ($messageClass !== null && $messageClass !== '') {
+        if ($criteria->messageClass !== null && $criteria->messageClass !== '') {
             $conditions[] = 'm.message_class LIKE :messageClass';
-            $parameters['messageClass'] = '%' . $messageClass . '%';
+            $parameters['messageClass'] = '%' . $criteria->messageClass . '%';
         }
 
-        if ($transportName !== null && $transportName !== '') {
+        if ($criteria->transportName !== null && $criteria->transportName !== '') {
             $conditions[] = 'm.transport_name LIKE :transportName';
-            $parameters['transportName'] = '%' . $transportName . '%';
+            $parameters['transportName'] = '%' . $criteria->transportName . '%';
         }
 
-        if ($businessReference !== null && $businessReference !== '') {
+        if ($criteria->businessReference !== null && $criteria->businessReference !== '') {
             $conditions[] = 'm.business_reference LIKE :businessReference';
-            $parameters['businessReference'] = '%' . $businessReference . '%';
+            $parameters['businessReference'] = '%' . $criteria->businessReference . '%';
         }
 
-        if ($topicGroup !== null && $topicGroup !== '') {
-            $conditions[] = match ($topicGroup) {
+        if ($criteria->topicGroup !== null && $criteria->topicGroup !== '') {
+            $conditions[] = match ($criteria->topicGroup) {
                 'Bestellungen' => "m.message_class LIKE '%\\\\Checkout\\\\Order\\\\%'",
                 'Zahlungen' => "(m.message_class LIKE '%\\\\Checkout\\\\Payment\\\\%' OR m.message_class LIKE 'Swag\\\\PayPal\\\\%')",
                 'Kommunikation' => "m.message_class LIKE '%\\\\Content\\\\Mail\\\\%'",

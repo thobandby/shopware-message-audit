@@ -22,42 +22,57 @@ final class CurrentOperatorResolver
             return new OperatorIdentity(null, 'system', 'system');
         }
 
-        $userId = $source->getUserId();
-        if (\is_string($userId) && $userId !== '') {
-            $user = $this->connection->fetchAssociative(
-                'SELECT first_name, last_name, email, username FROM user WHERE id = :id',
-                ['id' => hex2bin(str_replace('-', '', $userId))]
-            );
-
-            if (\is_array($user)) {
-                $labelParts = array_filter([
-                    $user['first_name'] ?? null,
-                    $user['last_name'] ?? null,
-                ], static fn (?string $value): bool => $value !== null && trim($value) !== '');
-                $label = trim(implode(' ', $labelParts));
-
-                if ($label === '') {
-                    $label = (string) ($user['email'] ?? $user['username'] ?? $userId);
-                }
-
-                $email = $user['email'] ?? null;
-
-                return new OperatorIdentity(
-                    $userId,
-                    'admin-user',
-                    $label,
-                    \is_string($email) && $email !== '' ? $email : null
-                );
+        $identity = $this->resolveUserIdentity($source->getUserId());
+        if ($identity === null) {
+            $integrationId = $source->getIntegrationId();
+            if (\is_string($integrationId) && $integrationId !== '') {
+                $identity = new OperatorIdentity($integrationId, 'integration', 'integration:' . $integrationId);
             }
+        }
 
+        return $identity ?? new OperatorIdentity(null, 'admin-api', 'admin-api');
+    }
+
+    private function resolveUserIdentity(string|null $userId): ?OperatorIdentity
+    {
+        if (! \is_string($userId) || $userId === '') {
+            return null;
+        }
+
+        $user = $this->connection->fetchAssociative(
+            'SELECT first_name, last_name, email, username FROM user WHERE id = :id',
+            ['id' => hex2bin(str_replace('-', '', $userId))]
+        );
+
+        if (! \is_array($user)) {
             return new OperatorIdentity($userId, 'admin-user', 'admin-user:' . $userId);
         }
 
-        $integrationId = $source->getIntegrationId();
-        if (\is_string($integrationId) && $integrationId !== '') {
-            return new OperatorIdentity($integrationId, 'integration', 'integration:' . $integrationId);
+        $email = $user['email'] ?? null;
+
+        return new OperatorIdentity(
+            $userId,
+            'admin-user',
+            $this->resolveUserLabel($user, $userId),
+            \is_string($email) && $email !== '' ? $email : null
+        );
+    }
+
+    /**
+     * @param array<string, string|null> $user
+     */
+    private function resolveUserLabel(array $user, string $fallback): string
+    {
+        $labelParts = array_filter([
+            $user['first_name'] ?? null,
+            $user['last_name'] ?? null,
+        ], static fn (?string $value): bool => $value !== null && trim($value) !== '');
+        $label = trim(implode(' ', $labelParts));
+
+        if ($label !== '') {
+            return $label;
         }
 
-        return new OperatorIdentity(null, 'admin-api', 'admin-api');
+        return (string) ($user['email'] ?? $user['username'] ?? $fallback);
     }
 }

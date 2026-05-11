@@ -214,7 +214,7 @@ Component.register('mh-dashboard-index', {
         };
     },
     created() {
-        void this.loadAll();
+        this.loadAll();
     },
     methods: {
         async loadAll() {
@@ -248,7 +248,7 @@ Component.register('mh-dashboard-index', {
 
                 this.createNotificationError({
                     title: 'Messenger Audit',
-                    message: 'Die Messenger-Daten konnten nicht geladen werden.'
+                    message: this.resolveErrorMessage(error, 'Die Messenger-Daten konnten nicht geladen werden.')
                 });
             } finally {
                 this.isLoading = false;
@@ -273,25 +273,25 @@ Component.register('mh-dashboard-index', {
             } catch (error) {
                 this.createNotificationError({
                     title: 'Messenger Audit',
-                    message: 'Die Aktion konnte nicht ausgeführt werden.'
+                    message: this.resolveErrorMessage(error, 'Die Aktion konnte nicht ausgeführt werden.')
                 });
             }
         },
 
         onPageChange(page) {
             this.page = page;
-            void this.loadAll();
+            this.loadAll();
         },
 
         selectTopicGroup(topicGroup) {
             this.selectedTopicGroup = topicGroup;
             this.page = 1;
-            void this.loadAll();
+            this.loadAll();
         },
 
         applyFilters() {
             this.page = 1;
-            void this.loadAll();
+            this.loadAll();
         },
 
         resolveTimeRange() {
@@ -339,9 +339,13 @@ Component.register('mh-dashboard-index', {
             } catch (error) {
                 this.createNotificationError({
                     title: 'Messenger Audit',
-                    message: 'Die Bereinigung konnte nicht ausgeführt werden.'
+                    message: this.resolveErrorMessage(error, 'Die Bereinigung konnte nicht ausgeführt werden.')
                 });
             }
+        },
+
+        resolveErrorMessage(error, fallbackMessage) {
+            return error?.response?.data?.errors?.[0]?.detail || error?.message || fallbackMessage;
         }
     }
 });

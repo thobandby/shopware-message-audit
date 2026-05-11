@@ -7,6 +7,7 @@ namespace MessengerHistoryDashboard\Core\Service;
 use MessengerHistoryDashboard\Core\Messenger\Stamp\CausationIdStamp;
 use MessengerHistoryDashboard\Core\Messenger\Stamp\CorrelationIdStamp;
 use MessengerHistoryDashboard\Core\Repository\FailureRepository;
+use MessengerHistoryDashboard\Core\Repository\MessageMetadata;
 use MessengerHistoryDashboard\Core\Repository\MessageRepository;
 use MessengerHistoryDashboard\Core\Repository\TransitionRepository;
 use Symfony\Component\Messenger\Envelope;
@@ -33,13 +34,7 @@ final class MessageAuditWriter
     {
         $this->ensureMessageExists($uuid, $envelope->getMessage(), 'received', $envelope);
         $this->messageRepository->updateStatus($uuid, 'received');
-        $this->messageRepository->updateMetadata(
-            $uuid,
-            $this->resolveCorrelationId($envelope, $uuid),
-            $this->resolveCausationId($envelope),
-            $this->resolveTransportName($envelope),
-            $this->resolveBusinessReference($this->payloadSerializer->serialize($envelope->getMessage()))
-        );
+        $this->messageRepository->updateMetadata($uuid, $this->createMetadata($envelope, $uuid));
         $this->transitionRepository->insert($uuid, 'received');
     }
 
@@ -47,13 +42,7 @@ final class MessageAuditWriter
     {
         $this->ensureMessageExists($uuid, $envelope->getMessage(), 'handled', $envelope);
         $this->messageRepository->updateStatus($uuid, 'handled');
-        $this->messageRepository->updateMetadata(
-            $uuid,
-            $this->resolveCorrelationId($envelope, $uuid),
-            $this->resolveCausationId($envelope),
-            $this->resolveTransportName($envelope),
-            $this->resolveBusinessReference($this->payloadSerializer->serialize($envelope->getMessage()))
-        );
+        $this->messageRepository->updateMetadata($uuid, $this->createMetadata($envelope, $uuid));
         $this->transitionRepository->insert($uuid, 'handled');
     }
 
@@ -61,13 +50,7 @@ final class MessageAuditWriter
     {
         $this->ensureMessageExists($uuid, $envelope->getMessage(), 'failed', $envelope);
         $this->messageRepository->updateStatus($uuid, 'failed');
-        $this->messageRepository->updateMetadata(
-            $uuid,
-            $this->resolveCorrelationId($envelope, $uuid),
-            $this->resolveCausationId($envelope),
-            $this->resolveTransportName($envelope),
-            $this->resolveBusinessReference($this->payloadSerializer->serialize($envelope->getMessage()))
-        );
+        $this->messageRepository->updateMetadata($uuid, $this->createMetadata($envelope, $uuid));
         $this->transitionRepository->insert($uuid, 'failed');
         $this->failureRepository->insert($uuid, $exception::class, $exception->getMessage());
     }
@@ -87,10 +70,25 @@ final class MessageAuditWriter
             $message::class,
             json_encode($payload, JSON_THROW_ON_ERROR),
             $status,
-            $this->resolveCorrelationId($envelope, $uuid),
+            $this->createMetadata($envelope, $uuid, $payload)
+        );
+    }
+
+    /**
+     * @param array<string, array<array-key, scalar|null>|scalar|null>|null $payload
+     */
+    private function createMetadata(
+        Envelope $envelope,
+        ?string $fallbackCorrelationId = null,
+        ?array $payload = null
+    ): MessageMetadata {
+        $serializedPayload = $payload ?? $this->payloadSerializer->serialize($envelope->getMessage());
+
+        return new MessageMetadata(
+            $this->resolveCorrelationId($envelope, $fallbackCorrelationId ?? ''),
             $this->resolveCausationId($envelope),
             $this->resolveTransportName($envelope),
-            $this->resolveBusinessReference($payload)
+            $this->resolveBusinessReference($serializedPayload)
         );
     }
 

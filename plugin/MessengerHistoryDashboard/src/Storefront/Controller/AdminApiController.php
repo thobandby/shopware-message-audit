@@ -22,6 +22,8 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route(defaults: ['_routeScope' => ['api'], '_acl' => ['system.plugin_maintain']])]
 final class AdminApiController extends AbstractController
 {
+    private const MESSAGE_ID_REQUIREMENT = '[0-9a-fA-F-]{36,64}';
+
     public function __construct(
         private readonly MessageRepository $messageRepository,
         private readonly TransitionRepository $transitionRepository,
@@ -51,7 +53,7 @@ final class AdminApiController extends AbstractController
         $businessReference = $this->readStringFilter($request, 'businessReference');
 
         return new JsonResponse(
-            $this->messageRepository->list(
+            $this->messageRepository->list(new \MessengerHistoryDashboard\Core\Repository\MessageListCriteria(
                 $status,
                 $query,
                 $page,
@@ -62,7 +64,7 @@ final class AdminApiController extends AbstractController
                 $messageClass,
                 $transportName,
                 $businessReference
-            )
+            ))
         );
     }
 
@@ -82,7 +84,7 @@ final class AdminApiController extends AbstractController
     #[Route(
         path: '/api/_action/mh/messages/{id}',
         name: 'api.action.mh.message.detail',
-        requirements: ['id' => '[0-9a-fA-F-]{36,64}'],
+        requirements: ['id' => self::MESSAGE_ID_REQUIREMENT],
         methods: ['GET']
     )]
     public function detail(string $id): JsonResponse
@@ -104,7 +106,7 @@ final class AdminApiController extends AbstractController
     #[Route(
         path: '/api/_action/mh/messages/{id}/retry',
         name: 'api.action.mh.message.retry',
-        requirements: ['id' => '[0-9a-fA-F-]{36,64}'],
+        requirements: ['id' => self::MESSAGE_ID_REQUIREMENT],
         methods: ['POST']
     )]
     public function retry(string $id, Request $request, Context $context): JsonResponse
@@ -125,7 +127,7 @@ final class AdminApiController extends AbstractController
     #[Route(
         path: '/api/_action/mh/messages/{id}/quarantine',
         name: 'api.action.mh.message.quarantine',
-        requirements: ['id' => '[0-9a-fA-F-]{36,64}'],
+        requirements: ['id' => self::MESSAGE_ID_REQUIREMENT],
         methods: ['POST']
     )]
     public function quarantine(string $id, Request $request, Context $context): JsonResponse
@@ -145,7 +147,7 @@ final class AdminApiController extends AbstractController
     #[Route(
         path: '/api/_action/mh/messages/{id}/dismiss',
         name: 'api.action.mh.message.dismiss',
-        requirements: ['id' => '[0-9a-fA-F-]{36,64}'],
+        requirements: ['id' => self::MESSAGE_ID_REQUIREMENT],
         methods: ['POST']
     )]
     public function dismiss(string $id, Request $request, Context $context): JsonResponse

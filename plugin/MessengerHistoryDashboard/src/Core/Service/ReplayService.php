@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MessengerHistoryDashboard\Core\Service;
 
+use MessengerHistoryDashboard\Core\Exception\UnableToReplayMessage;
 use MessengerHistoryDashboard\Core\Messenger\Stamp\CausationIdStamp;
 use MessengerHistoryDashboard\Core\Messenger\Stamp\CorrelationIdStamp;
 use MessengerHistoryDashboard\Core\Messenger\Stamp\MessageUuidStamp;
@@ -29,12 +30,12 @@ final class ReplayService
         $message = $this->messageRepository->find($messageId);
 
         if ($message === false) {
-            throw new \RuntimeException('Message not found: ' . $messageId);
+            throw new UnableToReplayMessage('Message not found: ' . $messageId);
         }
 
         $payload = json_decode((string) $message['payload_json'], true, 512, JSON_THROW_ON_ERROR);
         if (! \is_array($payload)) {
-            throw new \RuntimeException('Invalid payload for message: ' . $messageId);
+            throw new UnableToReplayMessage('Invalid payload for message: ' . $messageId);
         }
 
         $newUuid = MessageUuidResolver::generate();

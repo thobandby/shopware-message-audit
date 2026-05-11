@@ -55,8 +55,9 @@ class MhDashboardApiService extends ApiService {
         }
 
         const query = params.toString();
+        const path = query === '' ? '/_action/mh/messages' : `/_action/mh/messages?${query}`;
 
-        return this.httpClient.get(`/_action/mh/messages${query ? `?${query}` : ''}`, {
+        return this.httpClient.get(path, {
             headers: this.getHeaders()
         });
     }
