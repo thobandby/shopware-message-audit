@@ -29,6 +29,9 @@
         <service id="MessengerHistoryDashboard\Command\SeedDemoCommand">
             <tag name="console.command"/>
         </service>
+        <service id="MessengerHistoryDashboard\Command\ConsumeWorkerCommand">
+            <tag name="console.command"/>
+        </service>
 
         <service id="MessengerHistoryDashboard\Core\Handler\SampleSuccessMessageHandler"/>
         <service id="MessengerHistoryDashboard\Core\Handler\SampleFailureMessageHandler"/>

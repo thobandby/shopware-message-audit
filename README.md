@@ -31,6 +31,8 @@ Danach:
 ./scripts/prepare-screenshot-data.sh
 ```
 
+Im Plugin selbst steht fuer lokale und produktive Worker-Starts der Command `bin/console mh:worker:consume` zur Verfuegung. Das Plugin erweitert den normalen Shopware-Messenger nur um zusaetzliche Audit-Details und ersetzt weder Queue noch Shopware-Standardmonitoring.
+
 ## Lokaler E2E
 
 ```bash

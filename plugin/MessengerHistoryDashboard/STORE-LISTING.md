@@ -4,6 +4,8 @@
 
 Messenger Audit macht Symfony Messenger in Shopware 6 im Alltag beherrschbar. Das Plugin zeigt verarbeitete und fehlgeschlagene Nachrichten im Admin, liefert Kennzahlen fuer Stoerungen und ermoeglicht direkte Operator-Aktionen wie Retry, Ausblenden und Erledigen.
 
+Messenger Audit ersetzt dabei keine Shopware-Standardfunktionen fuer Queue, Failed Messages oder Messenger-Statistiken. Es ergaenzt den vorhandenen Messenger-Betrieb um mehr Transparenz und feinere Detailinformationen.
+
 ## Nutzenversprechen
 
 - Fehler in Messenger-Prozessen schneller erkennen
@@ -24,6 +26,7 @@ Messenger Audit macht Symfony Messenger in Shopware 6 im Alltag beherrschbar. Da
 - Separate Failed-Ansicht fuer priorisierte Fehlerbearbeitung
 - Detailansicht mit Verlauf, Fehlerhistorie und Operator-Aktionen
 - Cleanup alter Audit-Eintraege
+- Plugin-eigener Worker-Startbefehl `bin/console mh:worker:consume`
 
 ## Kompatibilitaet
 
@@ -31,6 +34,7 @@ Messenger Audit macht Symfony Messenger in Shopware 6 im Alltag beherrschbar. Da
 - PHP: `8.2+`
 - Einsatzbereich: Self-hosted Shopware
 - benoetigt Messenger-Transport `async`
+- benoetigt einen laufenden Messenger-Worker
 
 ## Support
 
@@ -59,6 +63,7 @@ Messenger Audit schafft Transparenz fuer asynchrone Prozesse in Shopware 6. Stat
 ### Betriebshinweise
 
 - Retry setzt einen aktiven Worker voraus
+- das normale Shopware-Monitoring fuer Queue und Failed Messages bleibt weiterhin nutzbar
 - Das Plugin ist fuer technische Admin-Nutzer gedacht
 - Die Bereinigung von Alt-Daten sollte an eure Aufbewahrungsregeln angepasst werden
 

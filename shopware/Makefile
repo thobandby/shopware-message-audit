@@ -1,5 +1,5 @@
 ifndef APP_ENV
-    include .env
+    -include .env
 endif
 
 .DEFAULT_GOAL := help

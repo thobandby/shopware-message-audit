@@ -2,6 +2,8 @@
 
 Messenger Audit erweitert Shopware 6 um eine fokussierte Administrationsoberflaeche fuer Symfony Messenger. Das Plugin macht verarbeitete und fehlgeschlagene Nachrichten sichtbar, reduziert Suchaufwand bei Stoerungen und bietet direkte Operator-Aktionen fuer den Alltag.
 
+Das Plugin ersetzt dabei nicht den normalen Shopware-Messenger, keine Standard-Queue und keine Shopware-Werkzeuge fuer Message Queue oder Failed Messages. Es legt sich additiv daneben und liefert zusaetzliche Audit- und Detailinformationen.
+
 ## Nutzen
 
 - schneller Ueberblick ueber verarbeitete und fehlgeschlagene Nachrichten
@@ -15,12 +17,12 @@ Messenger Audit erweitert Shopware 6 um eine fokussierte Administrationsoberflae
 - Shopware `6.6`
 - PHP `8.2+`
 - konfigurierter Messenger-Transport `async`
-- laufender Worker fuer Retry-Verarbeitung
+- laufender Worker fuer Retry-Verarbeitung und Lifecycle-Tracking
 
 Beispiel:
 
 ```bash
-bin/console messenger:consume async --time-limit=5 --no-debug
+bin/console mh:worker:consume --time-limit=5
 ```
 
 ## Installation
@@ -45,8 +47,18 @@ Eine ausfuehrlichere Schritt-fuer-Schritt-Anleitung steht in [INSTALL.md](./INST
 
 ```bash
 bin/console mh:demo:seed
-bin/console messenger:consume async --time-limit=5 --no-debug
+bin/console mh:worker:consume --time-limit=5
 ```
+
+## Worker-Betrieb
+
+Das Plugin bringt einen eigenen Helfer-Command fuer den Standard-Shopware-Worker mit:
+
+```bash
+bin/console mh:worker:consume
+```
+
+Standardmaessig werden dabei die fuer Messenger Audit relevanten Shopware-Transports `async` und `low_priority` konsumiert. Das normale Shopware-Monitoring fuer Queue, Failed Messages und Transport-Statistiken bleibt dabei unveraendert die fachliche Basis; Messenger Audit ergaenzt nur tiefere Verlaeufe, Fehlerdetails und Operator-Aktionen.
 
 ## API
 
@@ -71,7 +83,7 @@ bin/console messenger:consume async --time-limit=5 --no-debug
 - freigegeben fuer selbst gehostete Shopware-Installationen
 - getestet mit Shopware `6.6`
 - getestet mit PHP `8.2+`
-- benoetigt einen aktiven Messenger-Worker fuer Retry-Verarbeitung
+- benoetigt einen aktiven Messenger-Worker fuer Retry-Verarbeitung und Lifecycle-Tracking
 
 ## Hinweise fuer den Betrieb
 
