@@ -16,9 +16,7 @@
         <service id="MessengerHistoryDashboard\Core\Service\MessageAuditWriter"/>
         <service id="MessengerHistoryDashboard\Core\Service\ReplayService"/>
 
-        <service id="MessengerHistoryDashboard\Core\Messenger\Middleware\DispatchAuditMiddleware">
-            <tag name="messenger.middleware"/>
-        </service>
+        <service id="MessengerHistoryDashboard\Core\Messenger\Middleware\DispatchAuditMiddleware"/>
 
         <service id="MessengerHistoryDashboard\Core\Messenger\Subscriber\MessengerWorkerSubscriber">
             <tag name="kernel.event_subscriber"/>

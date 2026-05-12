@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace MessengerHistoryDashboard\Core\Message;
 
-final class SampleSuccessMessage
+use Shopware\Core\Framework\MessageQueue\AsyncMessageInterface;
+
+final class SampleSuccessMessage implements AsyncMessageInterface
 {
     public function __construct(
         public readonly string $reference,
