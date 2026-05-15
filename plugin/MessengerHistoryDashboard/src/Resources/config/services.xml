@@ -13,12 +13,17 @@
         <service id="MessengerHistoryDashboard\Core\Repository\TransitionRepository"/>
         <service id="MessengerHistoryDashboard\Core\Repository\FailureRepository"/>
         <service id="MessengerHistoryDashboard\Core\Repository\OperatorActionRepository"/>
+        <service id="MessengerHistoryDashboard\Core\Repository\StateChangeContextRepository"/>
+        <service id="MessengerHistoryDashboard\Core\Repository\BusinessOrderSeedRepository"/>
         <service id="MessengerHistoryDashboard\Core\Service\MessageAuditWriter"/>
         <service id="MessengerHistoryDashboard\Core\Service\ReplayService"/>
 
         <service id="MessengerHistoryDashboard\Core\Messenger\Middleware\DispatchAuditMiddleware"/>
 
         <service id="MessengerHistoryDashboard\Core\Messenger\Subscriber\MessengerWorkerSubscriber">
+            <tag name="kernel.event_subscriber"/>
+        </service>
+        <service id="MessengerHistoryDashboard\Core\Subscriber\StateChangeAuditSubscriber">
             <tag name="kernel.event_subscriber"/>
         </service>
 
@@ -29,7 +34,14 @@
         <service id="MessengerHistoryDashboard\Command\SeedDemoCommand">
             <tag name="console.command"/>
         </service>
+        <service id="MessengerHistoryDashboard\Command\SeedBusinessDataCommand">
+            <tag name="console.command"/>
+        </service>
         <service id="MessengerHistoryDashboard\Command\ConsumeWorkerCommand">
+            <tag name="console.command"/>
+        </service>
+        <service id="MessengerHistoryDashboard\Command\DebugDispatchCommand">
+            <argument key="$sendersLocator" type="service" id="messenger.senders_locator"/>
             <tag name="console.command"/>
         </service>
 

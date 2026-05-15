@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MessengerHistoryDashboard\Core\Repository;
 
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 
 final class TransitionRepository
@@ -30,6 +31,27 @@ final class TransitionRepository
         return $this->connection->fetchAllAssociative(
             'SELECT event, created_at FROM mh_transition WHERE message_id = :id ORDER BY created_at ASC',
             ['id' => $messageId]
+        );
+    }
+
+    /**
+     * @param list<string> $messageIds
+     *
+     * @return list<array<string, scalar|null>>
+     */
+    public function findByMessageIds(array $messageIds): array
+    {
+        if ($messageIds === []) {
+            return [];
+        }
+
+        return $this->connection->fetchAllAssociative(
+            'SELECT t.message_id, t.event, t.created_at
+             FROM mh_transition t
+             WHERE t.message_id IN (:ids)
+             ORDER BY t.created_at ASC',
+            ['ids' => $messageIds],
+            ['ids' => ArrayParameterType::STRING]
         );
     }
 }

@@ -6,6 +6,17 @@ services:
       - "3306"
 ###< shopware/core ###
 
+###> xdebug ###
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      XDEBUG_MODE: debug,develop
+###< xdebug ###
+
 ###> symfony/mailer ###
   mailer:
     image: axllent/mailpit

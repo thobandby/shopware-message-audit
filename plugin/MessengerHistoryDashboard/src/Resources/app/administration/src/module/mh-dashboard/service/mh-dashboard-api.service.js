@@ -78,7 +78,8 @@ class MhDashboardApiService extends ApiService {
         return {
             Accept: 'application/json',
             Authorization: `Bearer ${this.loginService.getToken()}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'sw-admin-locale': Shopware.Store.get('session').currentLocale || 'de-DE'
         };
     }
 

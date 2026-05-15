@@ -1,7 +1,7 @@
 {
   "name": "local/messenger-history-dashboard",
   "version": "1.0.0",
-  "description": "Shopware 6 plugin for monitoring, reviewing, and handling Symfony Messenger messages in the Shopware administration",
+  "description": "Shopware 6 plugin for tracking business status changes, queue activity, and operational issues in the Shopware administration",
   "type": "shopware-platform-plugin",
   "license": "MIT",
   "homepage": "https://baumann-it-dienstleistungen.de",
@@ -21,8 +21,8 @@
   "extra": {
     "shopware-plugin-class": "MessengerHistoryDashboard\\MessengerHistoryDashboard",
     "label": {
-      "de-DE": "Messenger Audit",
-      "en-GB": "Messenger Audit"
+      "de-DE": "Status Audit",
+      "en-GB": "Status Audit"
     }
   },
   "support": {

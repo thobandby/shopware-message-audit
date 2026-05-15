@@ -61,6 +61,29 @@ final class MessageAuditWriter
         $this->transitionRepository->insert($messageId, 'retry_now');
     }
 
+    /**
+     * @param array<string, array<array-key, scalar|null>|scalar|null> $payload
+     */
+    public function recordStateChange(
+        string $id,
+        string $entryClass,
+        string $status,
+        array $payload,
+        MessageMetadata $metadata,
+        string $transitionEvent
+    ): void {
+        $this->messageRepository->insertIfMissing(
+            $id,
+            $entryClass,
+            json_encode($payload, JSON_THROW_ON_ERROR),
+            $status,
+            $metadata
+        );
+        $this->messageRepository->updateStatus($id, $status);
+        $this->messageRepository->updateMetadata($id, $metadata);
+        $this->transitionRepository->insert($id, $transitionEvent);
+    }
+
     private function ensureMessageExists(string $uuid, object $message, string $status, Envelope $envelope): void
     {
         $payload = $this->payloadSerializer->serialize($message);

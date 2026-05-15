@@ -10,7 +10,10 @@ final readonly class MessageMetadata
         public ?string $correlationId = null,
         public ?string $causationId = null,
         public ?string $transportName = null,
-        public ?string $businessReference = null
+        public ?string $businessReference = null,
+        public string $source = 'messenger',
+        public ?string $subjectType = null,
+        public ?string $subjectId = null
     ) {
     }
 }

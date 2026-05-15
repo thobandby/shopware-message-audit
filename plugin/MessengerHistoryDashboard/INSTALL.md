@@ -35,7 +35,7 @@ Fuer den Produktivbetrieb sollte der Worker dauerhaft ueber euren Prozessmanager
 
 ## Administration
 
-- Aufruf im Admin unter `Einstellungen > Erweiterungen > Messenger Audit`
+- Aufruf im Admin unter `Einstellungen > Erweiterungen > Status Audit`
 - Wenn der Menueeintrag fehlt: Browser-Cache leeren, Admin neu laden und Rechte pruefen
 
 ## Demo pruefen
@@ -49,7 +49,7 @@ Danach pruefen:
 
 - `GET /api/_action/mh/messages`
 - `GET /api/_action/mh/metrics`
-- Admin-Modul `Messenger Audit`
+- Admin-Modul `Status Audit`
 
 ## Betrieb
 

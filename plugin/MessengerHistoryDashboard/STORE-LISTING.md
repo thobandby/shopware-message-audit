@@ -2,14 +2,14 @@
 
 ## Kurzbeschreibung
 
-Messenger Audit macht Symfony Messenger in Shopware 6 im Alltag beherrschbar. Das Plugin zeigt verarbeitete und fehlgeschlagene Nachrichten im Admin, liefert Kennzahlen fuer Stoerungen und ermoeglicht direkte Operator-Aktionen wie Retry, Ausblenden und Erledigen.
+Status Audit macht technische Verarbeitung und fachliche Statuswechsel in Shopware 6 sichtbar. Das Plugin zeigt Queue-Eintraege, synchrone Bestell-, Zahlungs- und Lieferstatuswechsel im Admin, liefert Kennzahlen fuer Stoerungen und ermoeglicht direkte Operator-Aktionen wie Retry, Ausblenden und Erledigen.
 
-Messenger Audit ersetzt dabei keine Shopware-Standardfunktionen fuer Queue, Failed Messages oder Messenger-Statistiken. Es ergaenzt den vorhandenen Messenger-Betrieb um mehr Transparenz und feinere Detailinformationen.
+Status Audit ersetzt dabei keine Shopware-Standardfunktionen fuer Queue, Failed Messages oder Messenger-Statistiken. Es ergaenzt den vorhandenen Messenger-Betrieb um mehr Transparenz und feinere Detailinformationen fuer Queue und Statusverlauf.
 
 ## Nutzenversprechen
 
-- Fehler in Messenger-Prozessen schneller erkennen
-- kritische Nachrichten gezielt filtern und untersuchen
+- Fehler in Queue- und Statusprozessen schneller erkennen
+- kritische Eintraege gezielt filtern und untersuchen
 - Operator-Aktionen ohne SQL oder Shell direkt im Admin ausfuehren
 - Audit-Daten mit definierter Aufbewahrungsfrist aufraeumen
 
@@ -17,11 +17,11 @@ Messenger Audit ersetzt dabei keine Shopware-Standardfunktionen fuer Queue, Fail
 
 - Shopware-Agenturen
 - Betreiber mit asynchronen Prozessen
-- Teams mit ERP-, Zahlungs- oder Bestellintegrationen ueber Messenger
+- Teams mit ERP-, Zahlungs- oder Bestellintegrationen
 
 ## Funktionsumfang
 
-- Dashboard mit Kennzahlen fuer Gesamtmenge, Fehler, verarbeitete und empfangene Nachrichten
+- Dashboard mit Kennzahlen fuer Gesamtmenge, Fehler, Queue-Eintraege und Statuswechsel
 - Listenansicht mit Filtern nach Bereich, Status, Zeitraum und Suche
 - Separate Failed-Ansicht fuer priorisierte Fehlerbearbeitung
 - Detailansicht mit Verlauf, Fehlerhistorie und Operator-Aktionen
@@ -51,12 +51,12 @@ Messenger Audit ersetzt dabei keine Shopware-Standardfunktionen fuer Queue, Fail
 
 ### Einleitung
 
-Messenger Audit schafft Transparenz fuer asynchrone Prozesse in Shopware 6. Statt Messenger-Probleme erst ueber Logs, Datenbankabfragen oder Supportfaelle zu entdecken, erhalten Admin-Nutzer eine direkte Sicht auf Nachrichten, Fehler und moegliche Folgeaktionen.
+Status Audit schafft Transparenz fuer asynchrone Prozesse und synchrone Statuswechsel in Shopware 6. Statt Probleme erst ueber Logs, Datenbankabfragen oder Supportfaelle zu entdecken, erhalten Admin-Nutzer eine direkte Sicht auf Eintraege, Fehler und moegliche Folgeaktionen.
 
 ### Typische Anwendungsfaelle
 
-- fehlgeschlagene Zahlungs- oder Bestellnachrichten schnell identifizieren
-- problematische Nachrichten erneut anstossen
+- fehlgeschlagene Zahlungs- oder Bestellverarbeitung schnell identifizieren
+- problematische Queue-Eintraege erneut anstossen
 - bereits gepruefte Fehlerfaelle sauber markieren
 - alte Audit-Daten kontrolliert bereinigen
 

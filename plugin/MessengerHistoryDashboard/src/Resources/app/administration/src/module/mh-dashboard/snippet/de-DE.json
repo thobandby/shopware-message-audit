@@ -1,0 +1,133 @@
+{
+    "mh-dashboard": {
+        "general": {
+            "mainMenuItemGeneral": "Status Audit",
+            "descriptionTextModule": "Admin-Modul für Statusverfolgung, Queue-Transparenz und Fehlerbehandlung"
+        },
+        "notifications": {
+            "title": "Status Audit",
+            "loadDataError": "Die Audit-Daten konnten nicht geladen werden.",
+            "loadFailedError": "Die kritischen Einträge konnten nicht geladen werden.",
+            "loadDetailError": "Die Details konnten nicht geladen werden.",
+            "actionError": "Die Aktion konnte nicht ausgeführt werden.",
+            "cleanupError": "Die Bereinigung konnte nicht ausgeführt werden.",
+            "cleanupSuccess": "{count} Einträge wurden bereinigt."
+        },
+        "index": {
+            "header": "Status Audit",
+            "overviewTitle": "Überblick",
+            "reload": "Neu laden",
+            "metrics": {
+                "entries": "Einträge",
+                "failed": "Messenger-Fehler",
+                "stateChanges": "Statuswechsel",
+                "payments": "Zahlungsstatus"
+            },
+            "entriesTitle": "Einträge",
+            "applyFilters": "Filter anwenden",
+            "currentFilterCount": "{count} Einträge im aktuellen Filter",
+            "cleanupLabel": "Einträge löschen älter als",
+            "cleanup": "Löschen",
+            "empty": "Keine Daten vorhanden."
+        },
+        "failed": {
+            "header": "Kritische Einträge",
+            "title": "Kritische Einträge",
+            "empty": "Keine kritischen Einträge vorhanden."
+        },
+        "detail": {
+            "header": "Eintragsdetails",
+            "back": "Zur Übersicht",
+            "entryTitle": "Eintrag",
+            "contentTitle": "Inhalt",
+            "historyTitle": "Verlauf",
+            "relatedTitle": "Zugehörige Vorgänge",
+            "errorsTitle": "Fehler",
+            "actionsTitle": "Aktionen",
+            "noHistory": "Kein Verlauf vorhanden.",
+            "noErrors": "Keine Fehler vorhanden.",
+            "noActions": "Keine Aktionen vorhanden.",
+            "fields": {
+                "id": "ID",
+                "source": "Quelle",
+                "createdAt": "Erstellt",
+                "updatedAt": "Aktualisiert",
+                "topicGroup": "Bereich",
+                "type": "Typ",
+                "name": "Name",
+                "summary": "Bedeutung",
+                "impact": "Wirkung",
+                "reference": "Business-Referenz",
+                "class": "Klasse",
+                "correlation": "Korrelation",
+                "causation": "Ursache",
+                "transport": "Transport",
+                "status": "Status",
+                "retryCount": "Versuche"
+            }
+        },
+        "filters": {
+            "search": "Suche",
+            "searchPlaceholder": "Eintrag suchen",
+            "class": "Klasse",
+            "classPlaceholder": "z. B. Order",
+            "reference": "Business-Referenz",
+            "referencePlaceholder": "z. B. Bestellnummer",
+            "status": "Status",
+            "topicGroup": "Bereich",
+            "transport": "Transport",
+            "transportPlaceholder": "z. B. async",
+            "timeRange": "Zeitraum"
+        },
+        "topicGroups": {
+            "all": "Alle Bereiche",
+            "orders": "Bestellungen",
+            "payments": "Zahlungen",
+            "system": "System"
+        },
+        "statuses": {
+            "all": "Alle",
+            "dispatched": "Gesendet",
+            "received": "Empfangen",
+            "handled": "Verarbeitet",
+            "failed": "Fehlgeschlagen"
+        },
+        "timeRanges": {
+            "all": "Gesamter Zeitraum",
+            "1d": "Letzte 24 Stunden",
+            "7d": "Letzte 7 Tage",
+            "30d": "Letzte 30 Tage",
+            "90d": "Letzte 90 Tage"
+        },
+        "cleanupOptions": {
+            "7d": "Älter als 7 Tage",
+            "30d": "Älter als 30 Tage",
+            "90d": "Älter als 90 Tage",
+            "180d": "Älter als 180 Tage"
+        },
+        "pagination": {
+            "perPage": "Pro Seite"
+        },
+        "grid": {
+            "createdAt": "Erstellt",
+            "name": "Name",
+            "type": "Typ",
+            "groupCount": "Vorgänge",
+            "status": "Status",
+            "timestamp": "Zeitpunkt",
+            "event": "Ereignis",
+            "process": "Vorgang",
+            "errorClass": "Fehlerklasse",
+            "errorMessage": "Fehlermeldung",
+            "action": "Aktion",
+            "reason": "Grund",
+            "operator": "Operator"
+        },
+        "actions": {
+            "details": "Details",
+            "retry": "Erneut senden",
+            "quarantine": "Ausblenden",
+            "dismiss": "Erledigen"
+        }
+    }
+}

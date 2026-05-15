@@ -8,22 +8,22 @@ Component.register('mh-dashboard-index', {
     template: `
         <sw-page class="mh-dashboard-index">
             <template #smart-bar-header>
-                <h2>Messenger Audit</h2>
+                <h2>{{ $tc('mh-dashboard.index.header') }}</h2>
             </template>
 
             <template #content>
-                <sw-card title="Metrics">
-                    <sw-button @click="loadAll">Neu laden</sw-button>
+                <sw-card :title="$tc('mh-dashboard.index.overviewTitle')">
+                    <sw-button @click="loadAll">{{ $tc('mh-dashboard.index.reload') }}</sw-button>
 
-                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:16px;">
-                        <sw-card title="Total"><strong>{{ metrics.total || 0 }}</strong></sw-card>
-                        <sw-card title="Failed"><strong>{{ metrics.failed || 0 }}</strong></sw-card>
-                        <sw-card title="Handled"><strong>{{ metrics.handled || 0 }}</strong></sw-card>
-                        <sw-card title="Received"><strong>{{ metrics.received || 0 }}</strong></sw-card>
+                    <div class="mh-dashboard-index__metrics" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:16px;">
+                        <sw-card :title="$tc('mh-dashboard.index.metrics.entries')"><strong>{{ metrics.total || 0 }}</strong></sw-card>
+                        <sw-card :title="$tc('mh-dashboard.index.metrics.failed')"><strong>{{ metrics.messenger_failed || 0 }}</strong></sw-card>
+                        <sw-card :title="$tc('mh-dashboard.index.metrics.stateChanges')"><strong>{{ metrics.state_changes || 0 }}</strong></sw-card>
+                        <sw-card :title="$tc('mh-dashboard.index.metrics.payments')"><strong>{{ metrics.payments || 0 }}</strong></sw-card>
                     </div>
                 </sw-card>
 
-                <sw-card title="Messages" style="margin-top:16px;">
+                <sw-card :title="$tc('mh-dashboard.index.entriesTitle')" style="margin-top:16px;">
                     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
                         <sw-button
                             v-for="option in topicGroupOptions"
@@ -38,69 +38,63 @@ Component.register('mh-dashboard-index', {
                     <div style="display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:16px;align-items:end;margin-bottom:16px;">
                         <sw-text-field
                             v-model:value="searchTerm"
-                            label="Suche"
-                            placeholder="Nachricht suchen">
+                            :label="$tc('mh-dashboard.filters.search')"
+                            :placeholder="$tc('mh-dashboard.filters.searchPlaceholder')">
                         </sw-text-field>
 
                         <sw-text-field
                             v-model:value="messageClass"
-                            label="Klasse"
-                            placeholder="z. B. Order">
+                            :label="$tc('mh-dashboard.filters.class')"
+                            :placeholder="$tc('mh-dashboard.filters.classPlaceholder')">
                         </sw-text-field>
 
                         <sw-text-field
                             v-model:value="businessReference"
-                            label="Business-Referenz"
-                            placeholder="z. B. Bestellnummer">
+                            :label="$tc('mh-dashboard.filters.reference')"
+                            :placeholder="$tc('mh-dashboard.filters.referencePlaceholder')">
                         </sw-text-field>
 
                         <sw-single-select
                             v-model:value="selectedStatus"
-                            label="Status"
+                            :label="$tc('mh-dashboard.filters.status')"
                             :options="statusOptions">
                         </sw-single-select>
 
                         <sw-single-select
                             v-model:value="selectedTopicGroup"
-                            label="Bereich"
+                            :label="$tc('mh-dashboard.filters.topicGroup')"
                             :options="topicGroupOptions">
                         </sw-single-select>
 
                         <sw-text-field
                             v-model:value="transportName"
-                            label="Transport"
-                            placeholder="z. B. async">
+                            :label="$tc('mh-dashboard.filters.transport')"
+                            :placeholder="$tc('mh-dashboard.filters.transportPlaceholder')">
                         </sw-text-field>
 
                         <sw-single-select
-                            v-model:value="selectedLimit"
-                            label="Pro Seite"
-                            :options="limitOptions">
-                        </sw-single-select>
-
-                        <sw-single-select
                             v-model:value="selectedTimeRange"
-                            label="Zeitraum"
+                            :label="$tc('mh-dashboard.filters.timeRange')"
                             :options="timeRangeOptions">
                         </sw-single-select>
                     </div>
 
                     <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
-                        <sw-button variant="primary" @click="applyFilters">Filter anwenden</sw-button>
+                        <sw-button variant="primary" @click="applyFilters">{{ $tc('mh-dashboard.index.applyFilters') }}</sw-button>
                     </div>
 
                     <div style="display:grid;grid-template-columns:minmax(220px,1fr) auto auto;gap:16px;align-items:end;margin-bottom:16px;padding:16px;border:1px solid #d1d9e0;border-radius:8px;background:#f8fafc;">
                         <div style="color:#52667a;font-size:14px;">
-                            {{ total }} Einträge im aktuellen Filter
+                            {{ $tc('mh-dashboard.index.currentFilterCount', 0, { count: total }) }}
                         </div>
 
                         <sw-single-select
                             v-model:value="cleanupDays"
-                            label="Einträge löschen älter als"
+                            :label="$tc('mh-dashboard.index.cleanupLabel')"
                             :options="cleanupOptions">
                         </sw-single-select>
 
-                        <sw-button variant="danger" @click="cleanupOldEntries">Löschen</sw-button>
+                        <sw-button variant="danger" @click="cleanupOldEntries">{{ $tc('mh-dashboard.index.cleanup') }}</sw-button>
                     </div>
 
                     <sw-data-grid
@@ -116,41 +110,62 @@ Component.register('mh-dashboard-index', {
                             {{ item.status_label }}
                         </template>
 
+                        <template #column-business_reference="{ item }">
+                            {{ item.business_reference || '-' }}
+                        </template>
+
+                        <template #column-group_count="{ item }">
+                            {{ item.group_count || 1 }}
+                        </template>
+
                         <template #actions="{ item }">
                             <sw-context-menu-item
                                 :router-link="{ name: 'mh.dashboard.detail', params: { id: item.id } }">
-                                Details
+                                {{ $tc('mh-dashboard.actions.details') }}
                             </sw-context-menu-item>
                             <sw-context-menu-item
-                                :disabled="item.status !== 'failed'"
+                                :disabled="!item.allowed_actions?.includes('retry')"
                                 @click="runAction('retry', item)">
-                                Erneut senden
+                                {{ $tc('mh-dashboard.actions.retry') }}
                             </sw-context-menu-item>
                             <sw-context-menu-item
-                                :disabled="!['failed', 'received', 'dispatched'].includes(item.status)"
+                                :disabled="!item.allowed_actions?.includes('quarantine')"
                                 @click="runAction('quarantine', item)">
-                                Ausblenden
+                                {{ $tc('mh-dashboard.actions.quarantine') }}
                             </sw-context-menu-item>
                             <sw-context-menu-item
-                                :disabled="!['failed', 'received', 'dispatched', 'handled'].includes(item.status)"
+                                :disabled="!item.allowed_actions?.includes('dismiss')"
                                 @click="runAction('dismiss', item)">
-                                Erledigen
+                                {{ $tc('mh-dashboard.actions.dismiss') }}
                             </sw-context-menu-item>
                         </template>
 
-                        <template #pagination>
-                            <sw-pagination
-                                :page="page"
-                                :total="total"
-                                :limit="selectedLimit"
-                                :auto-hide="false"
-                                @page-change="onPageChange">
-                            </sw-pagination>
-                        </template>
                     </sw-data-grid>
 
+                    <div
+                        v-if="messages.length > 0"
+                        style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-top:16px;">
+                        <div style="width:160px;">
+                            <sw-single-select
+                                :value="selectedLimit"
+                                :label="$tc('mh-dashboard.pagination.perPage')"
+                                :options="limitOptions"
+                                @update:value="onLimitChange">
+                            </sw-single-select>
+                        </div>
+
+                        <sw-pagination
+                            :page="page"
+                            :total="total"
+                            :limit="selectedLimit"
+                            :steps="[selectedLimit]"
+                            :auto-hide="false"
+                            @page-change="onPageChange">
+                        </sw-pagination>
+                    </div>
+
                     <div v-else style="margin-top:16px;">
-                        Keine Daten vorhanden.
+                        {{ $tc('mh-dashboard.index.empty') }}
                     </div>
                 </sw-card>
             </template>
@@ -172,46 +187,62 @@ Component.register('mh-dashboard-index', {
             selectedTimeRange: '30d',
             selectedLimit: 25,
             cleanupDays: 30,
-            topicGroupOptions: [
-                { value: '', label: 'Alle Bereiche' },
-                { value: 'Bestellungen', label: 'Bestellungen' },
-                { value: 'Zahlungen', label: 'Zahlungen' },
-                { value: 'System', label: 'System' }
-            ],
-            statusOptions: [
-                { value: '', label: 'Alle' },
-                { value: 'dispatched', label: 'Gesendet' },
-                { value: 'received', label: 'Empfangen' },
-                { value: 'handled', label: 'Verarbeitet' },
-                { value: 'failed', label: 'Fehlgeschlagen' }
-            ],
-            timeRangeOptions: [
-                { value: '', label: 'Gesamter Zeitraum' },
-                { value: '1d', label: 'Letzte 24 Stunden' },
-                { value: '7d', label: 'Letzte 7 Tage' },
-                { value: '30d', label: 'Letzte 30 Tage' },
-                { value: '90d', label: 'Letzte 90 Tage' }
-            ],
             limitOptions: [
                 { value: 10, label: '10' },
                 { value: 25, label: '25' },
                 { value: 50, label: '50' },
                 { value: 100, label: '100' }
-            ],
-            cleanupOptions: [
-                { value: 7, label: 'Älter als 7 Tage' },
-                { value: 30, label: 'Älter als 30 Tage' },
-                { value: 90, label: 'Älter als 90 Tage' },
-                { value: 180, label: 'Älter als 180 Tage' }
-            ],
-            columns: [
-                { property: 'created_at', label: 'Erstellt', primary: true },
-                { property: 'message_type', label: 'Typ' },
-                { property: 'status', label: 'Status' },
-                { property: 'retry_count', label: 'Versuche' },
-                { property: 'available_actions', label: 'Mögliche Aktion' }
             ]
         };
+    },
+    computed: {
+        topicGroupOptions() {
+            return [
+                { value: '', label: this.$tc('mh-dashboard.topicGroups.all') },
+                { value: 'Bestellungen', label: this.$tc('mh-dashboard.topicGroups.orders') },
+                { value: 'Zahlungen', label: this.$tc('mh-dashboard.topicGroups.payments') },
+                { value: 'System', label: this.$tc('mh-dashboard.topicGroups.system') }
+            ];
+        },
+
+        statusOptions() {
+            return [
+                { value: '', label: this.$tc('mh-dashboard.statuses.all') },
+                { value: 'dispatched', label: this.$tc('mh-dashboard.statuses.dispatched') },
+                { value: 'received', label: this.$tc('mh-dashboard.statuses.received') },
+                { value: 'handled', label: this.$tc('mh-dashboard.statuses.handled') },
+                { value: 'failed', label: this.$tc('mh-dashboard.statuses.failed') }
+            ];
+        },
+
+        timeRangeOptions() {
+            return [
+                { value: '', label: this.$tc('mh-dashboard.timeRanges.all') },
+                { value: '1d', label: this.$tc('mh-dashboard.timeRanges.1d') },
+                { value: '7d', label: this.$tc('mh-dashboard.timeRanges.7d') },
+                { value: '30d', label: this.$tc('mh-dashboard.timeRanges.30d') },
+                { value: '90d', label: this.$tc('mh-dashboard.timeRanges.90d') }
+            ];
+        },
+
+        cleanupOptions() {
+            return [
+                { value: 7, label: this.$tc('mh-dashboard.cleanupOptions.7d') },
+                { value: 30, label: this.$tc('mh-dashboard.cleanupOptions.30d') },
+                { value: 90, label: this.$tc('mh-dashboard.cleanupOptions.90d') },
+                { value: 180, label: this.$tc('mh-dashboard.cleanupOptions.180d') }
+            ];
+        },
+
+        columns() {
+            return [
+                { property: 'created_at', label: this.$tc('mh-dashboard.grid.createdAt'), primary: true },
+                { property: 'message_name', label: this.$tc('mh-dashboard.grid.name') },
+                { property: 'message_type', label: this.$tc('mh-dashboard.grid.type') },
+                { property: 'group_count', label: this.$tc('mh-dashboard.grid.groupCount') },
+                { property: 'status', label: this.$tc('mh-dashboard.grid.status') }
+            ];
+        }
     },
     created() {
         this.loadAll();
@@ -247,8 +278,8 @@ Component.register('mh-dashboard-index', {
                 this.total = 0;
 
                 this.createNotificationError({
-                    title: 'Messenger Audit',
-                    message: this.resolveErrorMessage(error, 'Die Messenger-Daten konnten nicht geladen werden.')
+                    title: this.$tc('mh-dashboard.notifications.title'),
+                    message: this.resolveErrorMessage(error, this.$tc('mh-dashboard.notifications.loadDataError'))
                 });
             } finally {
                 this.isLoading = false;
@@ -272,14 +303,24 @@ Component.register('mh-dashboard-index', {
                 await this.loadAll();
             } catch (error) {
                 this.createNotificationError({
-                    title: 'Messenger Audit',
-                    message: this.resolveErrorMessage(error, 'Die Aktion konnte nicht ausgeführt werden.')
+                    title: this.$tc('mh-dashboard.notifications.title'),
+                    message: this.resolveErrorMessage(error, this.$tc('mh-dashboard.notifications.actionError'))
                 });
             }
         },
 
-        onPageChange(page) {
-            this.page = page;
+        onPageChange(pagination) {
+            const nextPage = typeof pagination === 'number' ? pagination : pagination.page;
+            const nextLimit = typeof pagination === 'number' ? this.selectedLimit : Number(pagination.limit);
+
+            this.page = nextPage;
+            this.selectedLimit = nextLimit;
+            this.loadAll();
+        },
+
+        onLimitChange(limit) {
+            this.selectedLimit = Number(limit);
+            this.page = 1;
             this.loadAll();
         },
 
@@ -330,16 +371,16 @@ Component.register('mh-dashboard-index', {
                 const deleted = response.data.deleted || {};
 
                 this.createNotificationSuccess({
-                    title: 'Messenger Audit',
-                    message: `${deleted.messages || 0} Nachrichten wurden bereinigt.`
+                    title: this.$tc('mh-dashboard.notifications.title'),
+                    message: this.$tc('mh-dashboard.notifications.cleanupSuccess', 0, { count: deleted.messages || 0 })
                 });
 
                 this.page = 1;
                 await this.loadAll();
             } catch (error) {
                 this.createNotificationError({
-                    title: 'Messenger Audit',
-                    message: this.resolveErrorMessage(error, 'Die Bereinigung konnte nicht ausgeführt werden.')
+                    title: this.$tc('mh-dashboard.notifications.title'),
+                    message: this.resolveErrorMessage(error, this.$tc('mh-dashboard.notifications.cleanupError'))
                 });
             }
         },

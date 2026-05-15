@@ -12,7 +12,7 @@ Alle relevanten Aenderungen an `MessengerHistoryDashboard` werden hier dokumenti
 
 ## 1.0.0 - 2026-05-06
 
-- Erstveroeffentlichung von Messenger Audit
+- Erstveroeffentlichung von Status Audit
 - Uebersicht, Failed-Ansicht und Detailansicht fuer Messenger-Nachrichten
 - Operator-Aktionen fuer Retry, Ausblenden und Erledigen
 - Kennzahlen und Bereinigungsfunktion fuer Audit-Eintraege

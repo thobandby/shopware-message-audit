@@ -1,15 +1,22 @@
+import deDE from './snippet/de-DE.json';
+import enGB from './snippet/en-GB.json';
+
 Shopware.Component.register('mh-dashboard-settings-icon', () => import('./components/mh-dashboard-settings-icon'));
 
+import './mh-dashboard.scss';
 import './service/mh-dashboard-api.service';
 import './page/mh-dashboard-index';
 import './page/mh-dashboard-failed';
 import './page/mh-dashboard-detail';
 
+Shopware.Locale.extend('de-DE', deDE);
+Shopware.Locale.extend('en-GB', enGB);
+
 Shopware.Module.register('mh-dashboard', {
     type: 'plugin',
     name: 'mh-dashboard',
-    title: 'Messenger Audit',
-    description: 'Admin module for messenger audit and failure handling',
+    title: 'mh-dashboard.general.mainMenuItemGeneral',
+    description: 'mh-dashboard.general.descriptionTextModule',
     color: '#3d91ff',
     icon: 'regular-history',
     favicon: 'icon-module-settings.png',

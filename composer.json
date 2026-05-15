@@ -1,6 +1,6 @@
 {
   "name": "mh/dashboard",
-  "description": "Shopware 6 plugin and release workspace for Messenger Audit, including local quality gates and E2E verification",
+  "description": "Shopware 6 plugin and release workspace for Status Audit, including local quality gates and E2E verification",
   "type": "project",
   "homepage": "https://baumann-it-dienstleistungen.de",
   "authors": [

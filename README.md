@@ -1,6 +1,6 @@
-# Messenger Audit
+# Status Audit
 
-Lokale Entwicklungsumgebung für das Shopware-Plugin `MessengerHistoryDashboard`.
+Lokale Entwicklungsumgebung für das Shopware-Plugin `MessengerHistoryDashboard` mit user-facing Branding `Status Audit`.
 
 ## Repo-Struktur
 
@@ -31,7 +31,7 @@ Danach:
 ./scripts/prepare-screenshot-data.sh
 ```
 
-Im Plugin selbst steht fuer lokale und produktive Worker-Starts der Command `bin/console mh:worker:consume` zur Verfuegung. Das Plugin erweitert den normalen Shopware-Messenger nur um zusaetzliche Audit-Details und ersetzt weder Queue noch Shopware-Standardmonitoring.
+Im Plugin selbst steht fuer lokale und produktive Worker-Starts der Command `bin/console mh:worker:consume` zur Verfuegung. Das Plugin erweitert den normalen Shopware-Messenger um Queue-Audit und synchrone Statusverfolgung und ersetzt weder Queue noch Shopware-Standardmonitoring.
 
 ## Lokaler E2E
 
@@ -107,12 +107,13 @@ composer admin:cleanup-dev-tools
 ./scripts/prepare-screenshot-data.sh
 ```
 
-Das Skript erzeugt Shopware-Demo-Daten fuer Bestellungen und seedet danach Messenger-Audit-Daten fuer Screenshots mit sichtbarer Aktivitaet.
+Das Skript erzeugt Shopware-Demo-Daten fuer Bestellungen und seedet danach Status-Audit-Daten fuer Screenshots mit sichtbarer Aktivitaet.
 
 ## Plugin-Funktionen
 
-- Messenger-Übersicht mit Filtern und Pagination
-- Failed-View
+- Audit-Übersicht mit Filtern und Pagination
+- Kritische-Einträge-View
 - Detailansicht mit Verlauf, Fehlern und Aktionen
+- synchrone Verfolgung von Bestell-, Zahlungs- und Lieferstatuswechseln
 - Retry, Ausblenden, Erledigen
 - Kennzahlen und Bereinigung alter Audit-Einträge

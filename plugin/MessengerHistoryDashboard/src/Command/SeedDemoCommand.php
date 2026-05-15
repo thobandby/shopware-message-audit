@@ -12,7 +12,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-#[AsCommand(name: 'mh:demo:seed', description: 'Dispatches demo messages for Messenger Audit')]
+#[AsCommand(name: 'mh:demo:seed', description: 'Dispatches demo messages for Status Audit')]
 final class SeedDemoCommand extends Command
 {
     public function __construct(private readonly MessageBusInterface $messageBus)

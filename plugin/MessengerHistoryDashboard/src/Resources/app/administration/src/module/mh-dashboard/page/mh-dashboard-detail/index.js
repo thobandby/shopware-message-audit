@@ -8,42 +8,43 @@ Component.register('mh-dashboard-detail', {
     template: `
         <sw-page class="mh-dashboard-detail">
             <template #smart-bar-header>
-                <h2>Nachrichtendetails</h2>
+                <h2>{{ $tc('mh-dashboard.detail.header') }}</h2>
             </template>
 
             <template #smart-bar-actions>
-                <sw-button @click="goBack">Zur Übersicht</sw-button>
-                <sw-button variant="primary" @click="runAction('retry')" :disabled="!canRetry">Erneut senden</sw-button>
-                <sw-button @click="runAction('quarantine')" :disabled="!canQuarantine">Ausblenden</sw-button>
-                <sw-button @click="runAction('dismiss')" :disabled="!canDismiss">Erledigen</sw-button>
+                <sw-button @click="goBack">{{ $tc('mh-dashboard.detail.back') }}</sw-button>
+                <sw-button variant="primary" @click="runAction('retry')" :disabled="!canRetry">{{ $tc('mh-dashboard.actions.retry') }}</sw-button>
+                <sw-button @click="runAction('quarantine')" :disabled="!canQuarantine">{{ $tc('mh-dashboard.actions.quarantine') }}</sw-button>
+                <sw-button @click="runAction('dismiss')" :disabled="!canDismiss">{{ $tc('mh-dashboard.actions.dismiss') }}</sw-button>
             </template>
 
             <template #content>
-                <sw-card v-if="message" title="Nachricht">
+                <sw-card v-if="message" :title="$tc('mh-dashboard.detail.entryTitle')">
                     <dl style="display:grid;grid-template-columns:220px 1fr;gap:12px 16px;">
-                        <dt>ID</dt><dd>{{ message.id }}</dd>
-                        <dt>Erstellt</dt><dd>{{ message.created_at }}</dd>
-                        <dt>Aktualisiert</dt><dd>{{ message.updated_at }}</dd>
-                        <dt>Bereich</dt><dd>{{ message.topic_group }}</dd>
-                        <dt>Typ</dt><dd>{{ message.message_type }}</dd>
-                        <dt>Name</dt><dd>{{ message.message_name }}</dd>
-                        <dt>Bedeutung</dt><dd>{{ message.business_summary }}</dd>
-                        <dt>Wirkung</dt><dd>{{ message.business_impact }}</dd>
-                        <dt>Business-Referenz</dt><dd>{{ message.business_reference || '-' }}</dd>
-                        <dt>Klasse</dt><dd>{{ message.message_class }}</dd>
-                        <dt>Korrelation</dt><dd>{{ message.correlation_id || '-' }}</dd>
-                        <dt>Ursache</dt><dd>{{ message.causation_id || '-' }}</dd>
-                        <dt>Transport</dt><dd>{{ message.transport_name || '-' }}</dd>
-                        <dt>Status</dt><dd>{{ message.status_label || message.status }}</dd>
-                        <dt>Versuche</dt><dd>{{ message.retry_count }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.id') }}</dt><dd>{{ message.id }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.source') }}</dt><dd>{{ message.source_label || '-' }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.createdAt') }}</dt><dd>{{ message.created_at }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.updatedAt') }}</dt><dd>{{ message.updated_at }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.topicGroup') }}</dt><dd>{{ message.topic_group }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.type') }}</dt><dd>{{ message.message_type }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.name') }}</dt><dd>{{ message.message_name }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.summary') }}</dt><dd>{{ message.business_summary }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.impact') }}</dt><dd>{{ message.business_impact }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.reference') }}</dt><dd>{{ message.business_reference || '-' }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.class') }}</dt><dd>{{ message.message_class }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.correlation') }}</dt><dd>{{ message.correlation_id || '-' }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.causation') }}</dt><dd>{{ message.causation_id || '-' }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.transport') }}</dt><dd>{{ message.transport_name || '-' }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.status') }}</dt><dd>{{ message.status_label || message.status }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.retryCount') }}</dt><dd>{{ message.retry_count }}</dd>
                     </dl>
                 </sw-card>
 
-                <sw-card v-if="message" title="Inhalt" style="margin-top:16px;">
+                <sw-card v-if="message" :title="$tc('mh-dashboard.detail.contentTitle')" style="margin-top:16px;">
                     <pre style="white-space:pre-wrap;word-break:break-word;">{{ message.payload_json }}</pre>
                 </sw-card>
 
-                <sw-card title="Verlauf" style="margin-top:16px;">
+                <sw-card :title="$tc('mh-dashboard.detail.historyTitle')" style="margin-top:16px;">
                     <sw-data-grid
                         v-if="transitions.length > 0"
                         :data-source="transitions"
@@ -51,10 +52,19 @@ Component.register('mh-dashboard-detail', {
                         :show-selection="false"
                         :show-actions="false">
                     </sw-data-grid>
-                    <div v-else>Kein Verlauf vorhanden.</div>
+                    <div v-else>{{ $tc('mh-dashboard.detail.noHistory') }}</div>
                 </sw-card>
 
-                <sw-card title="Fehler" style="margin-top:16px;">
+                <sw-card v-if="relatedMessages.length > 0" :title="$tc('mh-dashboard.detail.relatedTitle')" style="margin-top:16px;">
+                    <sw-data-grid
+                        :data-source="relatedMessages"
+                        :columns="relatedMessageColumns"
+                        :show-selection="false"
+                        :show-actions="false">
+                    </sw-data-grid>
+                </sw-card>
+
+                <sw-card :title="$tc('mh-dashboard.detail.errorsTitle')" style="margin-top:16px;">
                     <sw-data-grid
                         v-if="failures.length > 0"
                         :data-source="failures"
@@ -62,10 +72,10 @@ Component.register('mh-dashboard-detail', {
                         :show-selection="false"
                         :show-actions="false">
                     </sw-data-grid>
-                    <div v-else>Keine Fehler vorhanden.</div>
+                    <div v-else>{{ $tc('mh-dashboard.detail.noErrors') }}</div>
                 </sw-card>
 
-                <sw-card title="Aktionen" style="margin-top:16px;">
+                <sw-card :title="$tc('mh-dashboard.detail.actionsTitle')" style="margin-top:16px;">
                     <sw-data-grid
                         v-if="actions.length > 0"
                         :data-source="actions"
@@ -73,7 +83,7 @@ Component.register('mh-dashboard-detail', {
                         :show-selection="false"
                         :show-actions="false">
                     </sw-data-grid>
-                    <div v-else>Keine Aktionen vorhanden.</div>
+                    <div v-else>{{ $tc('mh-dashboard.detail.noActions') }}</div>
                 </sw-card>
             </template>
         </sw-page>
@@ -81,24 +91,10 @@ Component.register('mh-dashboard-detail', {
     data() {
         return {
             message: null,
+            relatedMessages: [],
             transitions: [],
             failures: [],
-            actions: [],
-            transitionColumns: [
-                { property: 'created_at', label: 'Zeitpunkt' },
-                { property: 'event', label: 'Ereignis' }
-            ],
-            failureColumns: [
-                { property: 'created_at', label: 'Zeitpunkt' },
-                { property: 'exception_class', label: 'Fehlerklasse' },
-                { property: 'error_message', label: 'Fehlermeldung' }
-            ],
-            actionColumns: [
-                { property: 'created_at', label: 'Zeitpunkt' },
-                { property: 'action', label: 'Aktion' },
-                { property: 'reason', label: 'Grund' },
-                { property: 'operator_label', label: 'Operator' }
-            ]
+            actions: []
         };
     },
     computed: {
@@ -116,6 +112,39 @@ Component.register('mh-dashboard-detail', {
 
         canDismiss() {
             return this.message?.allowed_actions?.includes('dismiss') ?? false;
+        },
+
+        relatedMessageColumns() {
+            return [
+                { property: 'created_at', label: this.$tc('mh-dashboard.grid.timestamp') },
+                { property: 'message_type', label: this.$tc('mh-dashboard.grid.type') },
+                { property: 'message_name', label: this.$tc('mh-dashboard.grid.process') },
+                { property: 'status_label', label: this.$tc('mh-dashboard.grid.status') }
+            ];
+        },
+
+        transitionColumns() {
+            return [
+                { property: 'created_at', label: this.$tc('mh-dashboard.grid.timestamp') },
+                { property: 'event', label: this.$tc('mh-dashboard.grid.event') }
+            ];
+        },
+
+        failureColumns() {
+            return [
+                { property: 'created_at', label: this.$tc('mh-dashboard.grid.timestamp') },
+                { property: 'exception_class', label: this.$tc('mh-dashboard.grid.errorClass') },
+                { property: 'error_message', label: this.$tc('mh-dashboard.grid.errorMessage') }
+            ];
+        },
+
+        actionColumns() {
+            return [
+                { property: 'created_at', label: this.$tc('mh-dashboard.grid.timestamp') },
+                { property: 'action', label: this.$tc('mh-dashboard.grid.action') },
+                { property: 'reason', label: this.$tc('mh-dashboard.grid.reason') },
+                { property: 'operator_label', label: this.$tc('mh-dashboard.grid.operator') }
+            ];
         }
     },
     created() {
@@ -127,13 +156,14 @@ Component.register('mh-dashboard-detail', {
                 const response = await this.mhDashboardApiService.getMessageDetail(this.messageId);
 
                 this.message = response.data.message || null;
+                this.relatedMessages = response.data.relatedMessages || [];
                 this.transitions = response.data.transitions || [];
                 this.failures = response.data.failures || [];
                 this.actions = response.data.actions || [];
             } catch (error) {
                 this.createNotificationError({
-                    title: 'Messenger Audit',
-                    message: this.resolveErrorMessage(error, 'Die Details konnten nicht geladen werden.')
+                    title: this.$tc('mh-dashboard.notifications.title'),
+                    message: this.resolveErrorMessage(error, this.$tc('mh-dashboard.notifications.loadDetailError'))
                 });
             }
         },
@@ -155,8 +185,8 @@ Component.register('mh-dashboard-detail', {
                 await this.loadDetail();
             } catch (error) {
                 this.createNotificationError({
-                    title: 'Messenger Audit',
-                    message: this.resolveErrorMessage(error, 'Die Aktion konnte nicht ausgeführt werden.')
+                    title: this.$tc('mh-dashboard.notifications.title'),
+                    message: this.resolveErrorMessage(error, this.$tc('mh-dashboard.notifications.actionError'))
                 });
             }
         },

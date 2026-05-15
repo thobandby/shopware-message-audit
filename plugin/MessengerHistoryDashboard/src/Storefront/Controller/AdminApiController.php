@@ -38,6 +38,7 @@ final class AdminApiController extends AbstractController
     #[Route(path: '/api/_action/mh/messages', name: 'api.action.mh.messages', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
+        $locale = $this->resolveLocale($request);
         $status = $request->query->get('status');
         $status = \is_string($status) && $status !== '' ? $status : null;
         $query = $request->query->get('query');
@@ -64,7 +65,7 @@ final class AdminApiController extends AbstractController
                 $messageClass,
                 $transportName,
                 $businessReference
-            ))
+            ), $locale)
         );
     }
 
@@ -89,15 +90,31 @@ final class AdminApiController extends AbstractController
     )]
     public function detail(string $id): JsonResponse
     {
-        $message = $this->messageRepository->find($id);
+        $request = $this->container->get('request_stack')->getCurrentRequest();
+        $locale = $request instanceof Request ? $this->resolveLocale($request) : 'de-DE';
+        $message = $this->messageRepository->find($id, $locale);
 
         if ($message === false) {
             throw new NotFoundHttpException('Message not found.');
         }
 
+        $relatedMessages = [];
+        $transitions = $this->transitionRepository->findByMessageId($id);
+
+        if (($message['source'] ?? null) === 'state_change' && \is_string($message['business_reference'] ?? null) && $message['business_reference'] !== '') {
+            $relatedMessages = $this->messageRepository->findRelatedStateChangesByBusinessReference((string) $message['business_reference'], $locale);
+            $transitions = $this->transitionRepository->findByMessageIds(
+                array_map(
+                    static fn (array $entry): string => (string) $entry['id'],
+                    $relatedMessages
+                )
+            );
+        }
+
         return new JsonResponse([
             'message' => $message,
-            'transitions' => $this->transitionRepository->findByMessageId($id),
+            'relatedMessages' => $relatedMessages,
+            'transitions' => $transitions,
             'failures' => $this->failureRepository->findByMessageId($id),
             'actions' => $this->operatorActionRepository->findByMessageId($id),
         ]);
@@ -218,5 +235,26 @@ final class AdminApiController extends AbstractController
         $trimmed = trim($value);
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    private function resolveLocale(Request $request): string
+    {
+        $locale = $request->headers->get('sw-admin-locale');
+
+        if (\is_string($locale) && $locale !== '') {
+            return $locale;
+        }
+
+        $acceptLanguage = $request->headers->get('Accept-Language');
+
+        if (\is_string($acceptLanguage) && $acceptLanguage !== '') {
+            $candidate = trim(explode(',', $acceptLanguage)[0]);
+
+            if ($candidate !== '') {
+                return $candidate;
+            }
+        }
+
+        return $request->getLocale();
     }
 }

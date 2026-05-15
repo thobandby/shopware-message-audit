@@ -1,12 +1,12 @@
-# Messenger Audit
+# Status Audit
 
-Messenger Audit erweitert Shopware 6 um eine fokussierte Administrationsoberflaeche fuer Symfony Messenger. Das Plugin macht verarbeitete und fehlgeschlagene Nachrichten sichtbar, reduziert Suchaufwand bei Stoerungen und bietet direkte Operator-Aktionen fuer den Alltag.
+Status Audit erweitert Shopware 6 um eine fokussierte Administrationsoberflaeche fuer synchrone Statuswechsel und asynchrone Queue-Aktivitaet. Das Plugin macht Bestell-, Zahlungs- und Lieferstatus sichtbar, ergaenzt Queue- und Fehlerdetails und bietet direkte Operator-Aktionen fuer den Alltag.
 
 Das Plugin ersetzt dabei nicht den normalen Shopware-Messenger, keine Standard-Queue und keine Shopware-Werkzeuge fuer Message Queue oder Failed Messages. Es legt sich additiv daneben und liefert zusaetzliche Audit- und Detailinformationen.
 
 ## Nutzen
 
-- schneller Ueberblick ueber verarbeitete und fehlgeschlagene Nachrichten
+- schneller Ueberblick ueber synchrone Statuswechsel und asynchrone Queue-Eintraege
 - Filter nach Bereich, Status, Zeitraum und Suchbegriff
 - Detailansicht mit Verlauf, Fehlern und ausgefuehrten Operator-Aktionen
 - Aktionen direkt im Admin: `Erneut senden`, `Ausblenden`, `Erledigen`
@@ -39,7 +39,7 @@ Eine ausfuehrlichere Schritt-fuer-Schritt-Anleitung steht in [INSTALL.md](./INST
 
 ## Administration
 
-- Menuepfad: `Einstellungen > Erweiterungen > Messenger Audit`
+- Menuepfad: `Einstellungen > Erweiterungen > Status Audit`
 - benoetigte Berechtigung: `Plugins und Erweiterungen verwalten`
 - falls der Eintrag nicht sofort sichtbar ist: Administration neu laden
 
@@ -58,7 +58,7 @@ Das Plugin bringt einen eigenen Helfer-Command fuer den Standard-Shopware-Worker
 bin/console mh:worker:consume
 ```
 
-Standardmaessig werden dabei die fuer Messenger Audit relevanten Shopware-Transports `async` und `low_priority` konsumiert. Das normale Shopware-Monitoring fuer Queue, Failed Messages und Transport-Statistiken bleibt dabei unveraendert die fachliche Basis; Messenger Audit ergaenzt nur tiefere Verlaeufe, Fehlerdetails und Operator-Aktionen.
+Standardmaessig werden dabei die fuer Status Audit relevanten Shopware-Transports `async` und `low_priority` konsumiert. Das normale Shopware-Monitoring fuer Queue, Failed Messages und Transport-Statistiken bleibt dabei unveraendert die fachliche Basis; Status Audit ergaenzt zusaetzlich synchrone Statuswechsel, tiefere Verlaeufe, Fehlerdetails und Operator-Aktionen.
 
 ## API
 

@@ -1,0 +1,133 @@
+{
+    "mh-dashboard": {
+        "general": {
+            "mainMenuItemGeneral": "Status Audit",
+            "descriptionTextModule": "Administration module for status tracking, queue visibility, and failure handling"
+        },
+        "notifications": {
+            "title": "Status Audit",
+            "loadDataError": "The audit data could not be loaded.",
+            "loadFailedError": "The critical entries could not be loaded.",
+            "loadDetailError": "The details could not be loaded.",
+            "actionError": "The action could not be executed.",
+            "cleanupError": "The cleanup could not be executed.",
+            "cleanupSuccess": "{count} entries were cleaned up."
+        },
+        "index": {
+            "header": "Status Audit",
+            "overviewTitle": "Overview",
+            "reload": "Reload",
+            "metrics": {
+                "entries": "Entries",
+                "failed": "Failed messages",
+                "stateChanges": "State changes",
+                "payments": "Payment status"
+            },
+            "entriesTitle": "Entries",
+            "applyFilters": "Apply filters",
+            "currentFilterCount": "{count} entries in the current filter",
+            "cleanupLabel": "Delete entries older than",
+            "cleanup": "Delete",
+            "empty": "No data available."
+        },
+        "failed": {
+            "header": "Critical entries",
+            "title": "Critical entries",
+            "empty": "No critical entries available."
+        },
+        "detail": {
+            "header": "Entry details",
+            "back": "Back to overview",
+            "entryTitle": "Entry",
+            "contentTitle": "Payload",
+            "historyTitle": "History",
+            "relatedTitle": "Related processes",
+            "errorsTitle": "Errors",
+            "actionsTitle": "Actions",
+            "noHistory": "No history available.",
+            "noErrors": "No errors available.",
+            "noActions": "No actions available.",
+            "fields": {
+                "id": "ID",
+                "source": "Source",
+                "createdAt": "Created",
+                "updatedAt": "Updated",
+                "topicGroup": "Area",
+                "type": "Type",
+                "name": "Name",
+                "summary": "Meaning",
+                "impact": "Impact",
+                "reference": "Business reference",
+                "class": "Class",
+                "correlation": "Correlation",
+                "causation": "Causation",
+                "transport": "Transport",
+                "status": "Status",
+                "retryCount": "Retries"
+            }
+        },
+        "filters": {
+            "search": "Search",
+            "searchPlaceholder": "Search entry",
+            "class": "Class",
+            "classPlaceholder": "e.g. Order",
+            "reference": "Business reference",
+            "referencePlaceholder": "e.g. order number",
+            "status": "Status",
+            "topicGroup": "Area",
+            "transport": "Transport",
+            "transportPlaceholder": "e.g. async",
+            "timeRange": "Time range"
+        },
+        "topicGroups": {
+            "all": "All areas",
+            "orders": "Orders",
+            "payments": "Payments",
+            "system": "System"
+        },
+        "statuses": {
+            "all": "All",
+            "dispatched": "Dispatched",
+            "received": "Received",
+            "handled": "Handled",
+            "failed": "Failed"
+        },
+        "timeRanges": {
+            "all": "Entire period",
+            "1d": "Last 24 hours",
+            "7d": "Last 7 days",
+            "30d": "Last 30 days",
+            "90d": "Last 90 days"
+        },
+        "cleanupOptions": {
+            "7d": "Older than 7 days",
+            "30d": "Older than 30 days",
+            "90d": "Older than 90 days",
+            "180d": "Older than 180 days"
+        },
+        "pagination": {
+            "perPage": "Per page"
+        },
+        "grid": {
+            "createdAt": "Created",
+            "name": "Name",
+            "type": "Type",
+            "groupCount": "Processes",
+            "status": "Status",
+            "timestamp": "Timestamp",
+            "event": "Event",
+            "process": "Process",
+            "errorClass": "Error class",
+            "errorMessage": "Error message",
+            "action": "Action",
+            "reason": "Reason",
+            "operator": "Operator"
+        },
+        "actions": {
+            "details": "Details",
+            "retry": "Retry",
+            "quarantine": "Hide",
+            "dismiss": "Dismiss"
+        }
+    }
+}

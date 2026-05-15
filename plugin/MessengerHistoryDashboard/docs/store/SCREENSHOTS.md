@@ -13,19 +13,19 @@ Dieser Ordner bereitet die Store-Screenshots inhaltlich vor. Reale Screenshots m
 
 ### 01 Dashboard Overview
 
-- Seite: `Einstellungen > Erweiterungen > Messenger Audit`
+- Seite: `Einstellungen > Erweiterungen > Status Audit`
 - Fokus: KPI-Karten und Tabellenueberblick
-- Caption-Vorschlag: `Uebersicht ueber Messenger-Nachrichten und aktuelle Kennzahlen`
+- Caption-Vorschlag: `Uebersicht ueber Queue-Eintraege, Statuswechsel und aktuelle Kennzahlen`
 
 ### 02 Filter And Failed List
 
-- Seite: `Messenger Audit > Fehlgeschlagen`
+- Seite: `Status Audit > Kritische Eintraege`
 - Fokus: Filter, Pagination, Kontextaktionen
-- Caption-Vorschlag: `Fehlgeschlagene Nachrichten gezielt filtern und priorisieren`
+- Caption-Vorschlag: `Kritische Eintraege gezielt filtern und priorisieren`
 
 ### 03 Message Detail
 
-- Seite: Detailansicht einer fehlgeschlagenen Nachricht
+- Seite: Detailansicht eines kritischen Eintrags
 - Fokus: Status, Fehlerhistorie, Transitionen, Operator-Aktionen
 - Caption-Vorschlag: `Alle relevanten Details und Aktionen an einer Stelle`
 

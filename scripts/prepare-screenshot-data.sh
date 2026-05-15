@@ -7,4 +7,4 @@ bash ./scripts/seed-mh-demo.sh
 echo "Screenshot-Daten vorbereitet."
 echo "Pruefe im Admin:"
 echo "- Bestellungen aus den Shopware-Demo-Daten"
-echo "- Messenger Audit mit Demo-Nachrichten und Aktionen"
+echo "- Status Audit mit Demo-Nachrichten, Statuswechseln und Aktionen"

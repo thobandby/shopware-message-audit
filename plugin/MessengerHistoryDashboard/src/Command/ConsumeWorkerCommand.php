@@ -14,7 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     name: 'mh:worker:consume',
-    description: 'Starts the standard Shopware Messenger worker for Messenger Audit transports'
+    description: 'Starts the standard Shopware Messenger worker for Status Audit transports'
 )]
 final class ConsumeWorkerCommand extends Command
 {
@@ -24,7 +24,7 @@ final class ConsumeWorkerCommand extends Command
             ->addArgument(
                 'receivers',
                 InputArgument::IS_ARRAY,
-                'Receivers to consume. Defaults to the standard Shopware transports used by Messenger Audit.'
+                'Receivers to consume. Defaults to the standard Shopware transports used by Status Audit.'
             )
             ->addOption('time-limit', null, InputOption::VALUE_REQUIRED, 'Maximum runtime in seconds.')
             ->addOption('memory-limit', null, InputOption::VALUE_REQUIRED, 'Maximum memory usage before stopping.')
