@@ -13,6 +13,7 @@ use MessengerHistoryDashboard\Core\Messenger\Subscriber\MessengerWorkerSubscribe
 use MessengerHistoryDashboard\Core\Operator\OperatorActionPolicy;
 use MessengerHistoryDashboard\Core\Repository\FailureRepository;
 use MessengerHistoryDashboard\Core\Repository\MessageMetadata;
+use MessengerHistoryDashboard\Core\Repository\MessagePresentationFormatter;
 use MessengerHistoryDashboard\Core\Repository\MessageRepository;
 use MessengerHistoryDashboard\Core\Repository\StateChangeContextRepository;
 use MessengerHistoryDashboard\Core\Repository\TransitionRepository;
@@ -293,7 +294,7 @@ final class MessengerLifecycleAuditTest extends TestCase
     private function createWriter(): MessageAuditWriter
     {
         return new MessageAuditWriter(
-            new MessageRepository($this->connection, new OperatorActionPolicy()),
+            new MessageRepository($this->connection, new OperatorActionPolicy(), new MessagePresentationFormatter()),
             new TransitionRepository($this->connection),
             new FailureRepository($this->connection),
             new PayloadSerializer()
