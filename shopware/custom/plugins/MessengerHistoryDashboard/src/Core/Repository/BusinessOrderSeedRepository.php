@@ -29,10 +29,10 @@ final class BusinessOrderSeedRepository
             static fn (array $order): array => [
                 'id' => (string) $order['id'],
                 'order_number' => (string) $order['order_number'],
-                'transaction_id' => is_string($order['transaction_id'] ?? null) && $order['transaction_id'] !== ''
+                'transaction_id' => \is_string($order['transaction_id'] ?? null) && $order['transaction_id'] !== ''
                     ? strtolower($order['transaction_id'])
                     : null,
-                'delivery_id' => is_string($order['delivery_id'] ?? null) && $order['delivery_id'] !== ''
+                'delivery_id' => \is_string($order['delivery_id'] ?? null) && $order['delivery_id'] !== ''
                     ? strtolower($order['delivery_id'])
                     : null,
             ],
@@ -43,9 +43,9 @@ final class BusinessOrderSeedRepository
                 LOWER(HEX(o.primary_order_transaction_id)) AS transaction_id,
                 LOWER(HEX(o.primary_order_delivery_id)) AS delivery_id
             FROM `order` o
-            WHERE o.auto_increment > :lastAutoIncrement
-            ORDER BY o.auto_increment ASC
-            LIMIT :limit',
+                WHERE o.auto_increment > :lastAutoIncrement
+                ORDER BY o.auto_increment ASC
+                LIMIT :limit',
                 [
                     'lastAutoIncrement' => $lastAutoIncrement,
                     'limit' => $limit,

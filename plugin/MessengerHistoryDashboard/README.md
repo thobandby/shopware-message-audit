@@ -14,7 +14,7 @@ Das Plugin ersetzt dabei nicht den normalen Shopware-Messenger, keine Standard-Q
 
 ## Voraussetzungen
 
-- Shopware `6.6`
+- Shopware `6.6+`
 - PHP `8.2+`
 - konfigurierter Messenger-Transport `async`
 - laufender Worker fuer Retry-Verarbeitung und Lifecycle-Tracking
@@ -22,7 +22,7 @@ Das Plugin ersetzt dabei nicht den normalen Shopware-Messenger, keine Standard-Q
 Beispiel:
 
 ```bash
-bin/console mh:worker:consume --time-limit=5
+bin/console messenger:consume async low_priority --time-limit=5
 ```
 
 ## Installation
@@ -43,22 +43,15 @@ Eine ausfuehrlichere Schritt-fuer-Schritt-Anleitung steht in [INSTALL.md](./INST
 - benoetigte Berechtigung: `Plugins und Erweiterungen verwalten`
 - falls der Eintrag nicht sofort sichtbar ist: Administration neu laden
 
-## Demo-Daten
-
-```bash
-bin/console mh:demo:seed
-bin/console mh:worker:consume --time-limit=5
-```
-
 ## Worker-Betrieb
 
-Das Plugin bringt einen eigenen Helfer-Command fuer den Standard-Shopware-Worker mit:
+Status Audit verwendet den normalen Shopware-Messenger-Worker. Fuer den Betrieb sollte daher ein regulaerer Worker fuer die relevanten Transports laufen, zum Beispiel:
 
 ```bash
-bin/console mh:worker:consume
+bin/console messenger:consume async low_priority
 ```
 
-Standardmaessig werden dabei die fuer Status Audit relevanten Shopware-Transports `async` und `low_priority` konsumiert. Das normale Shopware-Monitoring fuer Queue, Failed Messages und Transport-Statistiken bleibt dabei unveraendert die fachliche Basis; Status Audit ergaenzt zusaetzlich synchrone Statuswechsel, tiefere Verlaeufe, Fehlerdetails und Operator-Aktionen.
+Das normale Shopware-Monitoring fuer Queue, Failed Messages und Transport-Statistiken bleibt dabei unveraendert die fachliche Basis; Status Audit ergaenzt zusaetzlich synchrone Statuswechsel, tiefere Verlaeufe, Fehlerdetails und Operator-Aktionen.
 
 ## API
 
@@ -81,7 +74,7 @@ Standardmaessig werden dabei die fuer Status Audit relevanten Shopware-Transport
 ## Kompatibilitaet
 
 - freigegeben fuer selbst gehostete Shopware-Installationen
-- getestet mit Shopware `6.6`
+- kompatibel mit Shopware `6.6+`
 - getestet mit PHP `8.2+`
 - benoetigt einen aktiven Messenger-Worker fuer Retry-Verarbeitung und Lifecycle-Tracking
 

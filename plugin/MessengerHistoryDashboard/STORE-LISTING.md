@@ -26,11 +26,10 @@ Status Audit ersetzt dabei keine Shopware-Standardfunktionen fuer Queue, Failed 
 - Separate Failed-Ansicht fuer priorisierte Fehlerbearbeitung
 - Detailansicht mit Verlauf, Fehlerhistorie und Operator-Aktionen
 - Cleanup alter Audit-Eintraege
-- Plugin-eigener Worker-Startbefehl `bin/console mh:worker:consume`
 
 ## Kompatibilitaet
 
-- Shopware: `6.6`
+- Shopware: `6.6+`
 - PHP: `8.2+`
 - Einsatzbereich: Self-hosted Shopware
 - benoetigt Messenger-Transport `async`

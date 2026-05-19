@@ -39,6 +39,7 @@ final class MessagePresentationFormatter
     private const LABEL_LOW = 'label.low';
 
     private const NAME_GENERATE_PRODUCT_EXPORT = 'name.generate_product_export';
+    private const NAME_MESSENGER_RETENTION_CLEANUP = 'name.messenger_retention_cleanup';
     private const SUMMARY_ORDER_STATUS = 'summary.order_status';
     private const SUMMARY_PAYMENT_STATUS = 'summary.payment_status';
     private const SUMMARY_DELIVERY_STATUS = 'summary.delivery_status';
@@ -53,6 +54,7 @@ final class MessagePresentationFormatter
     private const SUMMARY_PRODUCT_EXPORT = 'summary.product_export';
     private const SUMMARY_SITEMAP = 'summary.sitemap';
     private const SUMMARY_SCHEDULED_TASK = 'summary.scheduled_task';
+    private const SUMMARY_MESSENGER_RETENTION_CLEANUP = 'summary.messenger_retention_cleanup';
     private const SUMMARY_PLUGIN = 'summary.plugin';
     private const SUMMARY_PAYPAL = 'summary.paypal';
     private const SUMMARY_FALLBACK_ORDERS = 'summary.fallback.orders';
@@ -84,11 +86,12 @@ final class MessagePresentationFormatter
         $row['allowed_actions'] = $allowedActions;
         $row['available_actions'] = $source === 'messenger' ? $availableActions : $this->translate($locale, self::LABEL_DETAILS);
         $row['status_label'] = $this->resolveStatusLabel($status, $source, $subjectType, $locale);
-        $row['business_summary'] = $this->resolveBusinessSummary($messageTypeKey, $topicGroupKey, $source, $locale);
+        $row['business_summary'] = $this->resolveBusinessSummary($messageClass, $messageTypeKey, $topicGroupKey, $source, $locale);
         $row['business_impact'] = $this->resolveBusinessImpact($status, $messageTypeKey, $topicGroupKey, $source, $locale);
         $row['source_label'] = $source === 'state_change'
             ? $this->translate($locale, self::LABEL_STATE_CHANGE)
             : $this->translate($locale, self::LABEL_MESSENGER);
+        $row['attempt_count'] = $this->resolveAttemptCount($source, $status, (int) ($row['retry_count'] ?? 0));
 
         return $row;
     }
@@ -106,6 +109,20 @@ final class MessagePresentationFormatter
         $row['message_name'] = $businessReference !== '' ? $orderLabel . ' ' . $businessReference : $orderLabel;
         $row['message_type'] = $orderLabel;
         $row['topic_group'] = $this->translate($locale, self::GROUP_ORDERS);
+        $row['available_actions'] = $this->translate($locale, self::LABEL_DETAILS);
+        $row['allowed_actions'] = [];
+
+        return $row;
+    }
+
+    /**
+     * @param array<string, array<array-key, scalar|null>|list<string>|scalar|null> $row
+     *
+     * @return array<string, array<array-key, scalar|null>|list<string>|scalar|null>
+     */
+    public function formatGroupedMessengerRow(array $row, string $locale, int $groupCount): array
+    {
+        $row['group_count'] = $groupCount;
         $row['available_actions'] = $this->translate($locale, self::LABEL_DETAILS);
         $row['allowed_actions'] = [];
 
@@ -131,6 +148,23 @@ final class MessagePresentationFormatter
             || ($candidateSubjectPriority === $currentSubjectPriority && $hasNewerOrHigherPriorityEvent);
     }
 
+    /**
+     * @param array<string, array<array-key, scalar|null>|list<string>|scalar|null> $groupedRow
+     * @param array<string, array<array-key, scalar|null>|list<string>|scalar|null> $candidate
+     */
+    public function shouldReplaceGroupedMessengerRow(array $groupedRow, array $candidate): bool
+    {
+        $currentCreatedAt = (string) ($groupedRow['created_at'] ?? '');
+        $candidateCreatedAt = (string) ($candidate['created_at'] ?? '');
+
+        if ($candidateCreatedAt !== $currentCreatedAt) {
+            return $candidateCreatedAt > $currentCreatedAt;
+        }
+
+        return $this->messengerStatusPriority((string) ($candidate['status'] ?? ''))
+            > $this->messengerStatusPriority((string) ($groupedRow['status'] ?? ''));
+    }
+
     private function resolveMessageName(string $messageClass, string $source, ?string $subjectType, string $status, string $locale): string
     {
         if ($source === 'state_change') {
@@ -147,8 +181,8 @@ final class MessagePresentationFormatter
         $profile = $this->resolveMessageClassProfile($messageClass);
 
         if ($profile['name'] !== null) {
-            return $profile['name'] === self::NAME_GENERATE_PRODUCT_EXPORT
-                ? $this->translate($locale, self::NAME_GENERATE_PRODUCT_EXPORT)
+            return \in_array($profile['name'], [self::NAME_GENERATE_PRODUCT_EXPORT, self::NAME_MESSENGER_RETENTION_CLEANUP], true)
+                ? $this->translate($locale, $profile['name'])
                 : $profile['name'];
         }
 
@@ -246,7 +280,7 @@ final class MessagePresentationFormatter
         };
     }
 
-    private function resolveBusinessSummary(string $messageTypeKey, string $topicGroupKey, string $source, string $locale): string
+    private function resolveBusinessSummary(string $messageClass, string $messageTypeKey, string $topicGroupKey, string $source, string $locale): string
     {
         if ($source === 'state_change') {
             return $this->translate($locale, match ($messageTypeKey) {
@@ -255,6 +289,12 @@ final class MessagePresentationFormatter
                 self::TYPE_DELIVERY_STATUS => self::SUMMARY_DELIVERY_STATUS,
                 default => self::SUMMARY_STATE_CHANGE,
             });
+        }
+
+        $profile = $this->resolveMessageClassProfile($messageClass);
+
+        if ($profile['summary'] !== null) {
+            return $this->translate($locale, $profile['summary']);
         }
 
         $summaryKey = match ($messageTypeKey) {
@@ -283,8 +323,21 @@ final class MessagePresentationFormatter
         return $this->translate($locale, $summaryKey);
     }
 
+    private function resolveAttemptCount(string $source, string $status, int $retryCount): int
+    {
+        if ($source !== 'messenger') {
+            return 0;
+        }
+
+        if ($status === 'dispatched') {
+            return 0;
+        }
+
+        return max(1, $retryCount + 1);
+    }
+
     /**
-     * @return array{name:?string, type:?string, topic_group:?string}
+     * @return array{name:?string, type:?string, topic_group:?string, summary:?string}
      */
     private function resolveMessageClassProfile(string $messageClass): array
     {
@@ -293,6 +346,13 @@ final class MessagePresentationFormatter
                 'name' => self::NAME_GENERATE_PRODUCT_EXPORT,
                 'type' => self::TYPE_PRODUCT_EXPORT,
                 'topic_group' => self::GROUP_INTEGRATIONS,
+                'summary' => null,
+            ],
+            'MessengerHistoryDashboard\Core\ScheduledTask\CleanupShopwareMessengerRetentionTask' => [
+                'name' => self::NAME_MESSENGER_RETENTION_CLEANUP,
+                'type' => self::TYPE_SCHEDULED_TASK,
+                'topic_group' => self::GROUP_SYSTEM,
+                'summary' => self::SUMMARY_MESSENGER_RETENTION_CLEANUP,
             ],
         ];
 
@@ -319,27 +379,28 @@ final class MessagePresentationFormatter
                 'name' => null,
                 'type' => self::TYPE_SCHEDULED_TASK,
                 'topic_group' => self::GROUP_SYSTEM,
+                'summary' => null,
             ]
-            : ['name' => null, 'type' => null, 'topic_group' => null];
+            : ['name' => null, 'type' => null, 'topic_group' => null, 'summary' => null];
     }
 
     /**
-     * @return array<string, array{name:?string, type:?string, topic_group:?string}>
+     * @return array<string, array{name:?string, type:?string, topic_group:?string, summary:?string}>
      */
     private function prefixProfiles(): array
     {
         return [
-            'Shopware\Core\Content\ProductExport\\' => ['name' => null, 'type' => self::TYPE_PRODUCT_EXPORT, 'topic_group' => self::GROUP_INTEGRATIONS],
-            'Shopware\Core\Content\Sitemap\\' => ['name' => null, 'type' => self::TYPE_SITEMAP, 'topic_group' => self::GROUP_CONTENT],
-            'Shopware\Core\Content\Media\\' => ['name' => null, 'type' => self::TYPE_MEDIA, 'topic_group' => self::GROUP_CONTENT],
-            'Shopware\Core\Content\Mail\\' => ['name' => null, 'type' => self::TYPE_MAIL, 'topic_group' => self::GROUP_COMMUNICATION],
-            'Shopware\Core\Content\Flow\\' => ['name' => null, 'type' => self::TYPE_FLOW, 'topic_group' => self::GROUP_ORDERS],
-            'Shopware\Core\Framework\Webhook\\' => ['name' => null, 'type' => self::TYPE_WEBHOOK, 'topic_group' => self::GROUP_INTEGRATIONS],
-            'Shopware\Core\Framework\DataAbstractionLayer\Indexing\\' => ['name' => null, 'type' => self::TYPE_INDEXER, 'topic_group' => self::GROUP_SYSTEM],
-            'Shopware\Core\Checkout\Order\\' => ['name' => null, 'type' => self::TYPE_ORDER, 'topic_group' => self::GROUP_ORDERS],
-            'Shopware\Core\Checkout\Payment\\' => ['name' => null, 'type' => self::TYPE_PAYMENT, 'topic_group' => self::GROUP_PAYMENTS],
-            'Swag\PayPal\\' => ['name' => null, 'type' => self::TYPE_PAYPAL, 'topic_group' => self::GROUP_INTEGRATIONS],
-            'MessengerHistoryDashboard\\' => ['name' => null, 'type' => self::TYPE_PLUGIN, 'topic_group' => self::GROUP_SYSTEM],
+            'Shopware\Core\Content\ProductExport\\' => ['name' => null, 'type' => self::TYPE_PRODUCT_EXPORT, 'topic_group' => self::GROUP_INTEGRATIONS, 'summary' => null],
+            'Shopware\Core\Content\Sitemap\\' => ['name' => null, 'type' => self::TYPE_SITEMAP, 'topic_group' => self::GROUP_CONTENT, 'summary' => null],
+            'Shopware\Core\Content\Media\\' => ['name' => null, 'type' => self::TYPE_MEDIA, 'topic_group' => self::GROUP_CONTENT, 'summary' => null],
+            'Shopware\Core\Content\Mail\\' => ['name' => null, 'type' => self::TYPE_MAIL, 'topic_group' => self::GROUP_COMMUNICATION, 'summary' => null],
+            'Shopware\Core\Content\Flow\\' => ['name' => null, 'type' => self::TYPE_FLOW, 'topic_group' => self::GROUP_ORDERS, 'summary' => null],
+            'Shopware\Core\Framework\Webhook\\' => ['name' => null, 'type' => self::TYPE_WEBHOOK, 'topic_group' => self::GROUP_INTEGRATIONS, 'summary' => null],
+            'Shopware\Core\Framework\DataAbstractionLayer\Indexing\\' => ['name' => null, 'type' => self::TYPE_INDEXER, 'topic_group' => self::GROUP_SYSTEM, 'summary' => null],
+            'Shopware\Core\Checkout\Order\\' => ['name' => null, 'type' => self::TYPE_ORDER, 'topic_group' => self::GROUP_ORDERS, 'summary' => null],
+            'Shopware\Core\Checkout\Payment\\' => ['name' => null, 'type' => self::TYPE_PAYMENT, 'topic_group' => self::GROUP_PAYMENTS, 'summary' => null],
+            'Swag\PayPal\\' => ['name' => null, 'type' => self::TYPE_PAYPAL, 'topic_group' => self::GROUP_INTEGRATIONS, 'summary' => null],
+            'MessengerHistoryDashboard\\' => ['name' => null, 'type' => self::TYPE_PLUGIN, 'topic_group' => self::GROUP_SYSTEM, 'summary' => null],
         ];
     }
 
@@ -383,152 +444,20 @@ final class MessagePresentationFormatter
         };
     }
 
-    private function translate(string $locale, string $key): string
+    private function messengerStatusPriority(string $status): int
     {
-        $language = str_starts_with(strtolower($locale), 'en') ? 'en' : 'de';
-
-        return self::translations()[$language][$key] ?? $key;
+        return match ($status) {
+            'failed' => 4,
+            'handled' => 3,
+            'received' => 2,
+            'dispatched' => 1,
+            default => 0,
+        };
     }
 
-    /**
-     * @return array<string, array<string, string>>
-     */
-    private static function translations(): array
+    private function translate(string $locale, string $key): string
     {
-        return [
-            'de' => [
-                self::TYPE_ORDER_STATUS => 'Bestellstatus',
-                self::TYPE_PAYMENT_STATUS => 'Zahlungsstatus',
-                self::TYPE_DELIVERY_STATUS => 'Lieferstatus',
-                self::TYPE_STATE_CHANGE => 'Statuswechsel',
-                self::TYPE_ORDER => 'Bestellung',
-                self::TYPE_PAYMENT => 'Zahlung',
-                self::TYPE_INDEXER => 'Indexer',
-                self::TYPE_FLOW => 'Ablauf',
-                self::TYPE_MAIL => 'E-Mail',
-                self::TYPE_WEBHOOK => 'Webhook',
-                self::TYPE_MEDIA => 'Medien',
-                self::TYPE_PRODUCT_EXPORT => 'Produkt-Export',
-                self::TYPE_SITEMAP => 'Sitemap',
-                self::TYPE_SCHEDULED_TASK => 'Geplanter Task',
-                self::TYPE_PLUGIN => 'Plugin',
-                self::TYPE_PAYPAL => 'PayPal',
-                self::TYPE_MISC => 'Sonstiges',
-                self::GROUP_ORDERS => 'Bestellungen',
-                self::GROUP_PAYMENTS => 'Zahlungen',
-                self::GROUP_COMMUNICATION => 'Kommunikation',
-                self::GROUP_INTEGRATIONS => 'Integrationen',
-                self::GROUP_CONTENT => 'Inhalte',
-                self::GROUP_SYSTEM => 'System',
-                self::LABEL_DETAILS => 'Details',
-                self::LABEL_MESSENGER => 'Messenger',
-                self::LABEL_STATE_CHANGE => 'Statuswechsel',
-                self::LABEL_REVIEW => 'Prüfen',
-                self::LABEL_MONITOR => 'Beobachten',
-                self::LABEL_LOW => 'Unkritisch',
-                self::NAME_GENERATE_PRODUCT_EXPORT => 'Produkt-Export erzeugen',
-                self::SUMMARY_ORDER_STATUS => 'Dokumentiert synchrone Statuswechsel einer Bestellung.',
-                self::SUMMARY_PAYMENT_STATUS => 'Dokumentiert synchrone Statuswechsel einer Zahlungstransaktion.',
-                self::SUMMARY_DELIVERY_STATUS => 'Dokumentiert synchrone Statuswechsel einer Lieferung.',
-                self::SUMMARY_STATE_CHANGE => 'Dokumentiert synchrone Statuswechsel im Shop.',
-                self::SUMMARY_ORDER => 'Bearbeitet Hintergrundaufgaben rund um Bestellungen.',
-                self::SUMMARY_PAYMENT => 'Bearbeitet Hintergrundaufgaben rund um Zahlungen und Zahlungsarten.',
-                self::SUMMARY_INDEXER => 'Aktualisiert interne Shop-Daten und Suchindizes.',
-                self::SUMMARY_FLOW => 'Führt automatisierte Abläufe und Regeln aus.',
-                self::SUMMARY_MAIL => 'Bearbeitet E-Mail-Versand oder E-Mail-Folgen.',
-                self::SUMMARY_WEBHOOK => 'Überträgt Daten an externe Systeme.',
-                self::SUMMARY_MEDIA => 'Verarbeitet Bilder und Mediendateien.',
-                self::SUMMARY_PRODUCT_EXPORT => 'Erzeugt Exportdateien für Produktfeeds und externe Kanäle.',
-                self::SUMMARY_SITEMAP => 'Erzeugt oder aktualisiert Sitemaps für den Shop.',
-                self::SUMMARY_SCHEDULED_TASK => 'Führt eine geplante Hintergrundaufgabe im Shop aus.',
-                self::SUMMARY_PLUGIN => 'Verarbeitet plugin-spezifische Hintergrundaufgaben.',
-                self::SUMMARY_PAYPAL => 'Verarbeitet PayPal-bezogene Hintergrundaufgaben.',
-                self::SUMMARY_FALLBACK_ORDERS => 'Bearbeitet Hintergrundaufgaben mit Bezug zu Bestellungen.',
-                self::SUMMARY_FALLBACK_PAYMENTS => 'Bearbeitet Hintergrundaufgaben mit Bezug zu Zahlungen.',
-                self::SUMMARY_FALLBACK_COMMUNICATION => 'Bearbeitet Hintergrundaufgaben mit Bezug zu E-Mails oder Benachrichtigungen.',
-                self::SUMMARY_FALLBACK_INTEGRATIONS => 'Bearbeitet Hintergrundaufgaben mit Bezug zu externen Systemen.',
-                self::SUMMARY_FALLBACK_CONTENT => 'Bearbeitet Hintergrundaufgaben mit Bezug zu Inhalten und Katalogdaten.',
-                self::SUMMARY_FALLBACK_SYSTEM => 'Bearbeitet allgemeine Hintergrundaufgaben im Shop.',
-                'status.open' => 'Offen',
-                'status.in_progress' => 'In Bearbeitung',
-                'status.completed' => 'Abgeschlossen',
-                'status.cancelled' => 'Storniert',
-                'status.paid' => 'Bezahlt',
-                'status.reminded' => 'Erinnert',
-                'status.failed' => 'Fehlgeschlagen',
-                'status.shipped' => 'Versandt',
-                'status.shipped_partially' => 'Teilversandt',
-                'status.dispatched' => 'Gesendet',
-                'status.received' => 'Empfangen',
-                'status.handled' => 'Verarbeitet',
-            ],
-            'en' => [
-                self::TYPE_ORDER_STATUS => 'Order status',
-                self::TYPE_PAYMENT_STATUS => 'Payment status',
-                self::TYPE_DELIVERY_STATUS => 'Delivery status',
-                self::TYPE_STATE_CHANGE => 'State change',
-                self::TYPE_ORDER => 'Order',
-                self::TYPE_PAYMENT => 'Payment',
-                self::TYPE_INDEXER => 'Indexer',
-                self::TYPE_FLOW => 'Flow',
-                self::TYPE_MAIL => 'Mail',
-                self::TYPE_WEBHOOK => 'Webhook',
-                self::TYPE_MEDIA => 'Media',
-                self::TYPE_PRODUCT_EXPORT => 'Product export',
-                self::TYPE_SITEMAP => 'Sitemap',
-                self::TYPE_SCHEDULED_TASK => 'Scheduled task',
-                self::TYPE_PLUGIN => 'Plugin',
-                self::TYPE_PAYPAL => 'PayPal',
-                self::TYPE_MISC => 'Miscellaneous',
-                self::GROUP_ORDERS => 'Orders',
-                self::GROUP_PAYMENTS => 'Payments',
-                self::GROUP_COMMUNICATION => 'Communication',
-                self::GROUP_INTEGRATIONS => 'Integrations',
-                self::GROUP_CONTENT => 'Content',
-                self::GROUP_SYSTEM => 'System',
-                self::LABEL_DETAILS => 'Details',
-                self::LABEL_MESSENGER => 'Messenger',
-                self::LABEL_STATE_CHANGE => 'State change',
-                self::LABEL_REVIEW => 'Review',
-                self::LABEL_MONITOR => 'Monitor',
-                self::LABEL_LOW => 'Low',
-                self::NAME_GENERATE_PRODUCT_EXPORT => 'Generate product export',
-                self::SUMMARY_ORDER_STATUS => 'Documents synchronous status changes of an order.',
-                self::SUMMARY_PAYMENT_STATUS => 'Documents synchronous status changes of a payment transaction.',
-                self::SUMMARY_DELIVERY_STATUS => 'Documents synchronous status changes of a delivery.',
-                self::SUMMARY_STATE_CHANGE => 'Documents synchronous status changes in the shop.',
-                self::SUMMARY_ORDER => 'Processes background tasks related to orders.',
-                self::SUMMARY_PAYMENT => 'Processes background tasks related to payments and payment methods.',
-                self::SUMMARY_INDEXER => 'Updates internal shop data and search indexes.',
-                self::SUMMARY_FLOW => 'Executes automated flows and rules.',
-                self::SUMMARY_MAIL => 'Processes mail delivery or follow-up mails.',
-                self::SUMMARY_WEBHOOK => 'Transfers data to external systems.',
-                self::SUMMARY_MEDIA => 'Processes images and media files.',
-                self::SUMMARY_PRODUCT_EXPORT => 'Generates export files for product feeds and external channels.',
-                self::SUMMARY_SITEMAP => 'Generates or updates sitemaps for the shop.',
-                self::SUMMARY_SCHEDULED_TASK => 'Executes a scheduled background task in the shop.',
-                self::SUMMARY_PLUGIN => 'Processes plugin-specific background tasks.',
-                self::SUMMARY_PAYPAL => 'Processes PayPal-related background tasks.',
-                self::SUMMARY_FALLBACK_ORDERS => 'Processes background tasks related to orders.',
-                self::SUMMARY_FALLBACK_PAYMENTS => 'Processes background tasks related to payments.',
-                self::SUMMARY_FALLBACK_COMMUNICATION => 'Processes background tasks related to mails or notifications.',
-                self::SUMMARY_FALLBACK_INTEGRATIONS => 'Processes background tasks related to external systems.',
-                self::SUMMARY_FALLBACK_CONTENT => 'Processes background tasks related to content and catalog data.',
-                self::SUMMARY_FALLBACK_SYSTEM => 'Processes general background tasks in the shop.',
-                'status.open' => 'Open',
-                'status.in_progress' => 'In progress',
-                'status.completed' => 'Completed',
-                'status.cancelled' => 'Cancelled',
-                'status.paid' => 'Paid',
-                'status.reminded' => 'Reminded',
-                'status.failed' => 'Failed',
-                'status.shipped' => 'Shipped',
-                'status.shipped_partially' => 'Partially shipped',
-                'status.dispatched' => 'Dispatched',
-                'status.received' => 'Received',
-                'status.handled' => 'Handled',
-            ],
-        ];
+        return MessagePresentationTranslations::translate($locale, $key);
     }
 
     private function stateChangeSubjectPriority(string $subjectType): int

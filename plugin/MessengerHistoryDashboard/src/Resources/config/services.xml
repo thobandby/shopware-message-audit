@@ -10,12 +10,18 @@
         <service id="MessengerHistoryDashboard\Core\Operator\OperatorActionPolicy"/>
         <service id="MessengerHistoryDashboard\Core\Operator\CurrentOperatorResolver"/>
         <service id="MessengerHistoryDashboard\Core\Repository\MessagePresentationFormatter"/>
+        <service id="MessengerHistoryDashboard\Core\Repository\MessageWhereClauseBuilder"/>
+        <service id="MessengerHistoryDashboard\Core\Repository\MessageRowGrouper"/>
         <service id="MessengerHistoryDashboard\Core\Repository\MessageRepository"/>
         <service id="MessengerHistoryDashboard\Core\Repository\TransitionRepository"/>
         <service id="MessengerHistoryDashboard\Core\Repository\FailureRepository"/>
         <service id="MessengerHistoryDashboard\Core\Repository\OperatorActionRepository"/>
         <service id="MessengerHistoryDashboard\Core\Repository\StateChangeContextRepository"/>
         <service id="MessengerHistoryDashboard\Core\Repository\BusinessOrderSeedRepository"/>
+        <service id="MessengerHistoryDashboard\Core\ScheduledTask\CleanupShopwareMessengerRetentionTask">
+            <tag name="shopware.scheduled.task"/>
+        </service>
+        <service id="MessengerHistoryDashboard\Core\ScheduledTask\CleanupShopwareMessengerRetentionTaskHandler"/>
         <service id="MessengerHistoryDashboard\Core\Service\MessageAuditWriter"/>
         <service id="MessengerHistoryDashboard\Core\Service\ReplayService"/>
 

@@ -18,10 +18,10 @@
             "overviewTitle": "Überblick",
             "reload": "Neu laden",
             "metrics": {
-                "entries": "Einträge",
-                "failed": "Messenger-Fehler",
-                "stateChanges": "Statuswechsel",
-                "payments": "Zahlungsstatus"
+                "messenger24h": "Shopware-Messenger (24 Std)",
+                "retries": "Wiederholungen",
+                "failed": "Fehler",
+                "orderPaymentStates": "Bestell-/Zahlungsstatus"
             },
             "entriesTitle": "Einträge",
             "applyFilters": "Filter anwenden",
@@ -74,10 +74,18 @@
             "reference": "Business-Referenz",
             "referencePlaceholder": "z. B. Bestellnummer",
             "status": "Status",
+            "entryFilter": "Einträge",
             "topicGroup": "Bereich",
             "transport": "Transport",
             "transportPlaceholder": "z. B. async",
             "timeRange": "Zeitraum"
+        },
+        "entryFilters": {
+            "all": "Alle Einträge",
+            "shopwareMessenger": "Shopware-Messenger (24 Std)",
+            "internalJobs": "Eigene und interne Jobs",
+            "orders": "Bestellungen",
+            "payments": "Zahlungen"
         },
         "topicGroups": {
             "all": "Alle Bereiche",
@@ -100,10 +108,12 @@
             "90d": "Letzte 90 Tage"
         },
         "cleanupOptions": {
+            "1h": "Älter als 1 Stunde",
+            "8h": "Älter als 8 Stunden",
+            "24h": "Älter als 24 Stunden",
+            "3d": "Älter als 3 Tage",
             "7d": "Älter als 7 Tage",
-            "30d": "Älter als 30 Tage",
-            "90d": "Älter als 90 Tage",
-            "180d": "Älter als 180 Tage"
+            "30d": "Älter als 30 Tage"
         },
         "pagination": {
             "perPage": "Pro Seite"

@@ -23,8 +23,8 @@ Component.register('mh-dashboard-detail', {
                     <dl style="display:grid;grid-template-columns:220px 1fr;gap:12px 16px;">
                         <dt>{{ $tc('mh-dashboard.detail.fields.id') }}</dt><dd>{{ message.id }}</dd>
                         <dt>{{ $tc('mh-dashboard.detail.fields.source') }}</dt><dd>{{ message.source_label || '-' }}</dd>
-                        <dt>{{ $tc('mh-dashboard.detail.fields.createdAt') }}</dt><dd>{{ message.created_at }}</dd>
-                        <dt>{{ $tc('mh-dashboard.detail.fields.updatedAt') }}</dt><dd>{{ message.updated_at }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.createdAt') }}</dt><dd>{{ formatDateTime(message.created_at) }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.updatedAt') }}</dt><dd>{{ formatDateTime(message.updated_at) }}</dd>
                         <dt>{{ $tc('mh-dashboard.detail.fields.topicGroup') }}</dt><dd>{{ message.topic_group }}</dd>
                         <dt>{{ $tc('mh-dashboard.detail.fields.type') }}</dt><dd>{{ message.message_type }}</dd>
                         <dt>{{ $tc('mh-dashboard.detail.fields.name') }}</dt><dd>{{ message.message_name }}</dd>
@@ -36,7 +36,7 @@ Component.register('mh-dashboard-detail', {
                         <dt>{{ $tc('mh-dashboard.detail.fields.causation') }}</dt><dd>{{ message.causation_id || '-' }}</dd>
                         <dt>{{ $tc('mh-dashboard.detail.fields.transport') }}</dt><dd>{{ message.transport_name || '-' }}</dd>
                         <dt>{{ $tc('mh-dashboard.detail.fields.status') }}</dt><dd>{{ message.status_label || message.status }}</dd>
-                        <dt>{{ $tc('mh-dashboard.detail.fields.retryCount') }}</dt><dd>{{ message.retry_count }}</dd>
+                        <dt>{{ $tc('mh-dashboard.detail.fields.retryCount') }}</dt><dd>{{ message.attempt_count ?? message.retry_count }}</dd>
                     </dl>
                 </sw-card>
 
@@ -51,6 +51,9 @@ Component.register('mh-dashboard-detail', {
                         :columns="transitionColumns"
                         :show-selection="false"
                         :show-actions="false">
+                        <template #column-created_at="{ item }">
+                            {{ formatDateTime(item.created_at) }}
+                        </template>
                     </sw-data-grid>
                     <div v-else>{{ $tc('mh-dashboard.detail.noHistory') }}</div>
                 </sw-card>
@@ -61,6 +64,9 @@ Component.register('mh-dashboard-detail', {
                         :columns="relatedMessageColumns"
                         :show-selection="false"
                         :show-actions="false">
+                        <template #column-created_at="{ item }">
+                            {{ formatDateTime(item.created_at) }}
+                        </template>
                     </sw-data-grid>
                 </sw-card>
 
@@ -71,6 +77,9 @@ Component.register('mh-dashboard-detail', {
                         :columns="failureColumns"
                         :show-selection="false"
                         :show-actions="false">
+                        <template #column-created_at="{ item }">
+                            {{ formatDateTime(item.created_at) }}
+                        </template>
                     </sw-data-grid>
                     <div v-else>{{ $tc('mh-dashboard.detail.noErrors') }}</div>
                 </sw-card>
@@ -82,6 +91,9 @@ Component.register('mh-dashboard-detail', {
                         :columns="actionColumns"
                         :show-selection="false"
                         :show-actions="false">
+                        <template #column-created_at="{ item }">
+                            {{ formatDateTime(item.created_at) }}
+                        </template>
                     </sw-data-grid>
                     <div v-else>{{ $tc('mh-dashboard.detail.noActions') }}</div>
                 </sw-card>
@@ -98,6 +110,14 @@ Component.register('mh-dashboard-detail', {
         };
     },
     computed: {
+        currentLocale() {
+            return Shopware.Store.get('session').currentLocale || 'de-DE';
+        },
+
+        currentTimeZone() {
+            return Shopware.Store.get('session').currentUser?.timeZone || 'UTC';
+        },
+
         messageId() {
             return this.$route.params.id;
         },
@@ -193,6 +213,28 @@ Component.register('mh-dashboard-detail', {
 
         resolveErrorMessage(error, fallbackMessage) {
             return error?.response?.data?.errors?.[0]?.detail || error?.message || fallbackMessage;
+        },
+
+        formatDateTime(value) {
+            if (!value) {
+                return '-';
+            }
+
+            const date = new Date(String(value).replace(' ', 'T') + 'Z');
+
+            if (Number.isNaN(date.getTime())) {
+                return value;
+            }
+
+            return new Intl.DateTimeFormat(this.currentLocale, {
+                timeZone: this.currentTimeZone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }).format(date);
         },
 
         goBack() {

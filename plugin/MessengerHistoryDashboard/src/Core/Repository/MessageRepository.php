@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MessengerHistoryDashboard\Core\Repository;
 
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use MessengerHistoryDashboard\Core\Operator\OperatorActionPolicy;
 
@@ -14,7 +15,9 @@ final class MessageRepository
     public function __construct(
         private readonly Connection $connection,
         private readonly OperatorActionPolicy $operatorActionPolicy,
-        private readonly MessagePresentationFormatter $presentationFormatter
+        private readonly MessagePresentationFormatter $presentationFormatter,
+        private readonly MessageWhereClauseBuilder $whereClauseBuilder,
+        private readonly MessageRowGrouper $rowGrouper
     ) {
     }
 
@@ -36,9 +39,7 @@ final class MessageRepository
 FROM mh_message m
 SQL;
 
-        $where = $this->buildWhereClause(
-            $criteria
-        );
+        $where = $this->whereClauseBuilder->buildWhereClause($criteria);
         $parameters = $where['parameters'];
 
         $selectSql = <<<'SQL'
@@ -52,30 +53,6 @@ SELECT
     m.causation_id,
     m.transport_name,
     m.business_reference,
-    SUBSTRING_INDEX(m.message_class, '\\', -1) AS message_name,
-    CASE
-        WHEN m.message_class LIKE '%\\Checkout\\Order\\%' THEN 'Bestellung'
-        WHEN m.message_class LIKE '%\\Checkout\\Payment\\%' THEN 'Zahlung'
-        WHEN m.message_class LIKE '%\\DataAbstractionLayer\\Indexing\\%' THEN 'Indexer'
-        WHEN m.message_class LIKE '%\\Content\\Flow\\%' THEN 'Ablauf'
-        WHEN m.message_class LIKE '%\\Content\\Mail\\%' THEN 'E-Mail'
-        WHEN m.message_class LIKE '%\\Framework\\Webhook\\%' THEN 'Webhook'
-        WHEN m.message_class LIKE '%\\Content\\Media\\%' THEN 'Medien'
-        WHEN m.message_class LIKE 'MessengerHistoryDashboard\\%' THEN 'Plugin'
-        WHEN m.message_class LIKE 'Swag\\PayPal\\%' THEN 'PayPal'
-        ELSE 'Sonstiges'
-    END AS message_type,
-    CASE
-        WHEN m.message_class LIKE '%\\Checkout\\Order\\%' THEN 'Bestellungen'
-        WHEN m.message_class LIKE '%\\Checkout\\Payment\\%' THEN 'Zahlungen'
-        WHEN m.message_class LIKE '%\\Content\\Mail\\%' THEN 'Kommunikation'
-        WHEN m.message_class LIKE '%\\Framework\\Webhook\\%' THEN 'Integrationen'
-        WHEN m.message_class LIKE 'Swag\\PayPal\\%' THEN 'Integrationen'
-        WHEN m.message_class LIKE '%\\Content\\Media\\%' THEN 'Inhalte'
-        WHEN m.message_class LIKE '%\\Content\\Category\\%' THEN 'Inhalte'
-        WHEN m.message_class LIKE '%\\Content\\Rule\\%' THEN 'Inhalte'
-        ELSE 'System'
-    END AS topic_group,
     m.status,
     m.retry_count,
     m.created_at,
@@ -91,7 +68,7 @@ SQL;
 
         $listSql = $selectSql . ' ' . $baseSql . $where['sql'] . ' ORDER BY m.created_at DESC';
         $rows = $this->connection->fetchAllAssociative($listSql, $parameters);
-        $groupedRows = $this->groupRows($this->mapRows($rows, $locale), $locale);
+        $groupedRows = $this->rowGrouper->groupRows($this->mapRows($rows, $locale), $locale);
         $total = \count($groupedRows);
 
         return [
@@ -131,6 +108,39 @@ SQL;
             [
                 'source' => 'state_change',
                 'businessReference' => $businessReference,
+            ]
+        );
+
+        return $this->mapRows($rows, $locale);
+    }
+
+    /**
+     * @return list<array<string, array<array-key, scalar|null>|list<string>|scalar|null>>
+     */
+    public function findRelatedMessengerLifecycle(string $messageClass, \DateTimeImmutable $createdAt, string $locale = 'de-DE'): array
+    {
+        $bucketStart = $createdAt->setTime(
+            (int) $createdAt->format('H'),
+            (int) $createdAt->format('i'),
+            0
+        );
+        $bucketEnd = $bucketStart->add(new \DateInterval('PT1M'));
+
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT id, message_class, source, subject_type, subject_id, correlation_id, causation_id, transport_name, business_reference, payload_json, status, retry_count, created_at, updated_at
+             FROM mh_message
+             WHERE source = :source
+               AND message_class = :messageClass
+               AND created_at >= :bucketStart
+               AND created_at < :bucketEnd
+               AND (subject_type IS NULL OR subject_type = \'\')
+               AND (business_reference IS NULL OR business_reference = \'\')
+             ORDER BY created_at ASC',
+            [
+                'source' => 'messenger',
+                'messageClass' => $messageClass,
+                'bucketStart' => $bucketStart->format(self::DATETIME_FORMAT),
+                'bucketEnd' => $bucketEnd->format(self::DATETIME_FORMAT),
             ]
         );
 
@@ -178,6 +188,21 @@ SQL;
         );
     }
 
+    public function syncRetryCount(string $id, int $retryCount): void
+    {
+        $this->connection->executeStatement(
+            'UPDATE mh_message
+             SET retry_count = CASE WHEN retry_count > :retryCount THEN retry_count ELSE :retryCount END,
+                 updated_at = :updatedAt
+             WHERE id = :id',
+            [
+                'id' => $id,
+                'retryCount' => $retryCount,
+                'updatedAt' => (new \DateTimeImmutable())->format(self::DATETIME_FORMAT),
+            ]
+        );
+    }
+
     public function updateMetadata(string $id, MessageMetadata $metadata): void
     {
         $updates = ['updated_at' => (new \DateTimeImmutable())->format(self::DATETIME_FORMAT)];
@@ -218,29 +243,107 @@ SQL;
     }
 
     /**
-     * @return array{total:int, messenger_failed:int, state_changes:int, orders:int, payments:int}
+     * @return array{messenger_24h:int, retries:int, failures:int, order_payment_states:int}
      */
     public function metrics(): array
     {
+        $messengerCutoff = $this->whereClauseBuilder->createUtc24HourCutoff();
+
         return [
-            'total' => (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mh_message'),
-            'messenger_failed' => (int) $this->connection->fetchOne(
-                'SELECT COUNT(*) FROM mh_message WHERE source = :source AND status = :status',
-                ['source' => 'messenger', 'status' => 'failed']
+            'messenger_24h' => (int) $this->connection->fetchOne(
+                'SELECT COUNT(*) FROM mh_message
+                 WHERE source = :source
+                   AND SUBSTR(message_class, 1, :shopwarePrefixLength) = :shopwarePrefix
+                   AND created_at >= :cutoff',
+                [
+                    'source' => 'messenger',
+                    'shopwarePrefix' => MessageWhereClauseBuilder::SHOPWARE_CLASS_PREFIX,
+                    'shopwarePrefixLength' => \strlen(MessageWhereClauseBuilder::SHOPWARE_CLASS_PREFIX),
+                    'cutoff' => $messengerCutoff,
+                ]
             ),
-            'state_changes' => (int) $this->connection->fetchOne(
-                'SELECT COUNT(*) FROM mh_message WHERE source = :source',
+            'retries' => (int) $this->connection->fetchOne(
+                'SELECT COALESCE(SUM(retry_count), 0) FROM mh_message
+                 WHERE source = :source
+                   AND created_at >= :cutoff',
+                [
+                    'source' => 'messenger',
+                    'cutoff' => $messengerCutoff,
+                ]
+            ),
+            'failures' => (int) $this->connection->fetchOne(
+                'SELECT COUNT(*) FROM mh_message
+                 WHERE (source = :messengerSource AND status = :failedStatus)
+                    OR (
+                        source = :stateChangeSource
+                        AND subject_type IN (\'order\', \'order_transaction\')
+                        AND status IN (\'failed\', \'cancelled\')
+                    )',
+                [
+                    'messengerSource' => 'messenger',
+                    'failedStatus' => 'failed',
+                    'stateChangeSource' => 'state_change',
+                ]
+            ),
+            'order_payment_states' => (int) $this->connection->fetchOne(
+                'SELECT COUNT(*) FROM mh_message
+                 WHERE source = :source
+                   AND subject_type IN (\'order\', \'order_transaction\')',
                 ['source' => 'state_change']
             ),
-            'orders' => (int) $this->connection->fetchOne(
-                'SELECT COUNT(*) FROM mh_message WHERE subject_type = :subjectType',
-                ['subjectType' => 'order']
-            ),
-            'payments' => (int) $this->connection->fetchOne(
-                'SELECT COUNT(*) FROM mh_message WHERE subject_type = :subjectType',
-                ['subjectType' => 'order_transaction']
-            ),
         ];
+    }
+
+    public function cleanupShopwareMessengerEntriesOlderThan24Hours(): int
+    {
+        $messengerCutoff = $this->whereClauseBuilder->createUtc24HourCutoff();
+
+        $messageIds = $this->connection->fetchFirstColumn(
+            'SELECT id FROM mh_message
+             WHERE source = :source
+               AND SUBSTR(message_class, 1, :shopwarePrefixLength) = :shopwarePrefix
+               AND created_at < :cutoff',
+            [
+                'source' => 'messenger',
+                'shopwarePrefix' => MessageWhereClauseBuilder::SHOPWARE_CLASS_PREFIX,
+                'shopwarePrefixLength' => \strlen(MessageWhereClauseBuilder::SHOPWARE_CLASS_PREFIX),
+                'cutoff' => $messengerCutoff,
+            ]
+        );
+
+        if ($messageIds === []) {
+            return 0;
+        }
+
+        $ids = array_values(array_filter($messageIds, 'is_string'));
+
+        if ($ids === []) {
+            return 0;
+        }
+
+        $this->connection->executeStatement(
+            'DELETE FROM mh_transition WHERE message_id IN (:ids)',
+            ['ids' => $ids],
+            ['ids' => ArrayParameterType::STRING]
+        );
+
+        $this->connection->executeStatement(
+            'DELETE FROM mh_failure WHERE message_id IN (:ids)',
+            ['ids' => $ids],
+            ['ids' => ArrayParameterType::STRING]
+        );
+
+        $this->connection->executeStatement(
+            'DELETE FROM mh_operator_action WHERE message_id IN (:ids)',
+            ['ids' => $ids],
+            ['ids' => ArrayParameterType::STRING]
+        );
+
+        return $this->connection->executeStatement(
+            'DELETE FROM mh_message WHERE id IN (:ids)',
+            ['ids' => $ids],
+            ['ids' => ArrayParameterType::STRING]
+        );
     }
 
     /**
@@ -333,113 +436,5 @@ SQL;
         $availableActions = $source === 'messenger' ? $this->operatorActionPolicy->formatAllowedActions($status) : '';
 
         return $this->presentationFormatter->formatRow($row, $allowedActions, $availableActions, $locale);
-    }
-
-    /**
-     * @param list<array<string, array<array-key, scalar|null>|list<string>|scalar|null>> $rows
-     *
-     * @return list<array<string, array<array-key, scalar|null>|list<string>|scalar|null>>
-     */
-    private function groupRows(array $rows, string $locale): array
-    {
-        $groupedRows = [];
-
-        foreach ($rows as $row) {
-            $source = (string) ($row['source'] ?? '');
-
-            if ($source !== 'state_change') {
-                $groupedRows[] = $row;
-
-                continue;
-            }
-
-            $businessReference = (string) ($row['business_reference'] ?? '');
-            $subjectType = (string) ($row['subject_type'] ?? '');
-            $subjectId = (string) ($row['subject_id'] ?? '');
-            $groupKey = $businessReference !== ''
-                ? 'state_change:' . strtolower($businessReference)
-                : 'state_change:' . $subjectType . ':' . $subjectId;
-
-            if (! isset($groupedRows[$groupKey])) {
-                $row['group_count'] = 1;
-                $groupedRows[$groupKey] = $this->presentationFormatter->formatGroupedStateChangeRow($row, $locale);
-
-                continue;
-            }
-
-            $groupedRows[$groupKey]['group_count'] = (int) ($groupedRows[$groupKey]['group_count'] ?? 1) + 1;
-
-            if ($this->presentationFormatter->shouldReplaceGroupedStateChange($groupedRows[$groupKey], $row)) {
-                $row['group_count'] = (int) $groupedRows[$groupKey]['group_count'];
-                $groupedRows[$groupKey] = $this->presentationFormatter->formatGroupedStateChangeRow($row, $locale);
-            }
-        }
-
-        return array_values($groupedRows);
-    }
-
-    /**
-     * @return array{sql:string, parameters:array<string, int|string>}
-     */
-    private function buildWhereClause(MessageListCriteria $criteria): array
-    {
-        $conditions = [];
-        $parameters = [];
-
-        if ($criteria->status !== null) {
-            $conditions[] = 'm.status = :status';
-            $parameters['status'] = $criteria->status;
-        }
-
-        if ($criteria->createdFrom !== null) {
-            $conditions[] = 'm.created_at >= :createdFrom';
-            $parameters['createdFrom'] = $criteria->createdFrom->format(self::DATETIME_FORMAT);
-        }
-
-        if ($criteria->createdTo !== null) {
-            $conditions[] = 'm.created_at <= :createdTo';
-            $parameters['createdTo'] = $criteria->createdTo->format(self::DATETIME_FORMAT);
-        }
-
-        if ($criteria->query !== null && $criteria->query !== '') {
-            $conditions[] = '(m.id LIKE :query OR m.message_class LIKE :query OR m.business_reference LIKE :query OR m.subject_type LIKE :query)';
-            $parameters['query'] = '%' . $criteria->query . '%';
-        }
-
-        if ($criteria->messageClass !== null && $criteria->messageClass !== '') {
-            $conditions[] = 'm.message_class LIKE :messageClass';
-            $parameters['messageClass'] = '%' . $criteria->messageClass . '%';
-        }
-
-        if ($criteria->transportName !== null && $criteria->transportName !== '') {
-            $conditions[] = 'm.transport_name LIKE :transportName';
-            $parameters['transportName'] = '%' . $criteria->transportName . '%';
-        }
-
-        if ($criteria->businessReference !== null && $criteria->businessReference !== '') {
-            $conditions[] = 'm.business_reference LIKE :businessReference';
-            $parameters['businessReference'] = '%' . $criteria->businessReference . '%';
-        }
-
-        if ($criteria->topicGroup !== null && $criteria->topicGroup !== '') {
-            $conditions[] = match ($criteria->topicGroup) {
-                'Bestellungen' => "(m.subject_type IN ('order', 'order_delivery') OR m.message_class LIKE '%\\\\Checkout\\\\Order\\\\%')",
-                'Zahlungen' => "(m.subject_type = 'order_transaction' OR m.message_class LIKE '%\\\\Checkout\\\\Payment\\\\%' OR m.message_class LIKE 'Swag\\\\PayPal\\\\%')",
-                'Kommunikation' => "m.message_class LIKE '%\\\\Content\\\\Mail\\\\%'",
-                'Integrationen' => "(m.message_class LIKE '%\\\\Framework\\\\Webhook\\\\%' OR m.message_class LIKE 'Swag\\\\PayPal\\\\%')",
-                'Inhalte' => "(m.message_class LIKE '%\\\\Content\\\\Media\\\\%' OR m.message_class LIKE '%\\\\Content\\\\Category\\\\%' OR m.message_class LIKE '%\\\\Content\\\\Rule\\\\%')",
-                'System' => "(m.message_class NOT LIKE '%\\\\Checkout\\\\Order\\\\%' AND m.message_class NOT LIKE '%\\\\Checkout\\\\Payment\\\\%' AND m.message_class NOT LIKE '%\\\\Content\\\\Mail\\\\%' AND m.message_class NOT LIKE '%\\\\Framework\\\\Webhook\\\\%' AND m.message_class NOT LIKE 'Swag\\\\PayPal\\\\%' AND m.message_class NOT LIKE '%\\\\Content\\\\Media\\\\%' AND m.message_class NOT LIKE '%\\\\Content\\\\Category\\\\%' AND m.message_class NOT LIKE '%\\\\Content\\\\Rule\\\\%')",
-                default => '1 = 1',
-            };
-        }
-
-        if ($conditions === []) {
-            return ['sql' => '', 'parameters' => []];
-        }
-
-        return [
-            'sql' => ' WHERE ' . implode(' AND ', $conditions),
-            'parameters' => $parameters,
-        ];
     }
 }

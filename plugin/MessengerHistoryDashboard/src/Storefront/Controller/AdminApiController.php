@@ -43,6 +43,8 @@ final class AdminApiController extends AbstractController
         $status = \is_string($status) && $status !== '' ? $status : null;
         $query = $request->query->get('query');
         $query = \is_string($query) && trim($query) !== '' ? trim($query) : null;
+        $entryFilter = $request->query->get('entryFilter');
+        $entryFilter = \is_string($entryFilter) && trim($entryFilter) !== '' ? trim($entryFilter) : null;
         $topicGroup = $request->query->get('topicGroup');
         $topicGroup = \is_string($topicGroup) && trim($topicGroup) !== '' ? trim($topicGroup) : null;
         $page = max(1, (int) ($request->query->get('page') ?? 1));
@@ -59,6 +61,7 @@ final class AdminApiController extends AbstractController
                 $query,
                 $page,
                 $limit,
+                $entryFilter,
                 $topicGroup,
                 $createdFrom,
                 $createdTo,
@@ -72,8 +75,9 @@ final class AdminApiController extends AbstractController
     #[Route(path: '/api/_action/mh/messages/retention/cleanup', name: 'api.action.mh.messages.retention.cleanup', methods: ['POST'])]
     public function cleanup(Request $request): JsonResponse
     {
-        $days = max(1, (int) ($request->request->get('days') ?? 30));
-        $cutoff = new \DateTimeImmutable(\sprintf('-%d days', $days));
+        $hours = max(1, (int) ($request->request->get('hours') ?? 24));
+        $cutoff = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))
+            ->sub(new \DateInterval(\sprintf('PT%dH', $hours)));
 
         return new JsonResponse([
             'status' => 'ok',
@@ -109,6 +113,21 @@ final class AdminApiController extends AbstractController
                     $relatedMessages
                 )
             );
+        } elseif (($message['source'] ?? null) === 'messenger' && \is_string($message['message_class'] ?? null) && \is_string($message['created_at'] ?? null)) {
+            $createdAt = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $message['created_at']);
+
+            if ($createdAt instanceof \DateTimeImmutable) {
+                $relatedMessages = $this->messageRepository->findRelatedMessengerLifecycle((string) $message['message_class'], $createdAt, $locale);
+
+                if (\count($relatedMessages) > 1) {
+                    $transitions = $this->transitionRepository->findByMessageIds(
+                        array_map(
+                            static fn (array $entry): string => (string) $entry['id'],
+                            $relatedMessages
+                        )
+                    );
+                }
+            }
         }
 
         return new JsonResponse([

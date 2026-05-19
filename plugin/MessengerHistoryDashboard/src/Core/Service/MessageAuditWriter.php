@@ -12,6 +12,7 @@ use MessengerHistoryDashboard\Core\Repository\MessageRepository;
 use MessengerHistoryDashboard\Core\Repository\TransitionRepository;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Stamp\ReceivedStamp;
+use Symfony\Component\Messenger\Stamp\RedeliveryStamp;
 
 final class MessageAuditWriter
 {
@@ -34,6 +35,7 @@ final class MessageAuditWriter
     {
         $this->ensureMessageExists($uuid, $envelope->getMessage(), 'received', $envelope);
         $this->messageRepository->updateStatus($uuid, 'received');
+        $this->messageRepository->syncRetryCount($uuid, $this->resolveRetryCount($envelope));
         $this->messageRepository->updateMetadata($uuid, $this->createMetadata($envelope, $uuid));
         $this->transitionRepository->insert($uuid, 'received');
     }
@@ -42,14 +44,17 @@ final class MessageAuditWriter
     {
         $this->ensureMessageExists($uuid, $envelope->getMessage(), 'handled', $envelope);
         $this->messageRepository->updateStatus($uuid, 'handled');
+        $this->messageRepository->syncRetryCount($uuid, $this->resolveRetryCount($envelope));
         $this->messageRepository->updateMetadata($uuid, $this->createMetadata($envelope, $uuid));
         $this->transitionRepository->insert($uuid, 'handled');
+        $this->messageRepository->cleanupShopwareMessengerEntriesOlderThan24Hours();
     }
 
     public function onFailed(string $uuid, Envelope $envelope, \Throwable $exception): void
     {
         $this->ensureMessageExists($uuid, $envelope->getMessage(), 'failed', $envelope);
         $this->messageRepository->updateStatus($uuid, 'failed');
+        $this->messageRepository->syncRetryCount($uuid, $this->resolveRetryCount($envelope));
         $this->messageRepository->updateMetadata($uuid, $this->createMetadata($envelope, $uuid));
         $this->transitionRepository->insert($uuid, 'failed');
         $this->failureRepository->insert($uuid, $exception::class, $exception->getMessage());
@@ -57,7 +62,6 @@ final class MessageAuditWriter
 
     public function recordRetry(string $messageId): void
     {
-        $this->messageRepository->incrementRetryCount($messageId);
         $this->transitionRepository->insert($messageId, 'retry_now');
     }
 
@@ -138,6 +142,13 @@ final class MessageAuditWriter
         $stamp = $envelope->last(ReceivedStamp::class);
 
         return $stamp instanceof ReceivedStamp ? $stamp->getTransportName() : null;
+    }
+
+    private function resolveRetryCount(Envelope $envelope): int
+    {
+        $stamp = $envelope->last(RedeliveryStamp::class);
+
+        return $stamp instanceof RedeliveryStamp ? $stamp->getRetryCount() : 0;
     }
 
     /**

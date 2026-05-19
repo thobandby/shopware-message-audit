@@ -4,23 +4,14 @@ declare(strict_types=1);
 
 namespace Thorsten\MessengerHistory\Tests\Unit\Plugin;
 
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DriverManager;
 use MessengerHistoryDashboard\Core\Message\SampleFailureMessage;
 use MessengerHistoryDashboard\Core\Message\SampleSuccessMessage;
 use MessengerHistoryDashboard\Core\Messenger\Middleware\DispatchAuditMiddleware;
 use MessengerHistoryDashboard\Core\Messenger\Subscriber\MessengerWorkerSubscriber;
-use MessengerHistoryDashboard\Core\Operator\OperatorActionPolicy;
-use MessengerHistoryDashboard\Core\Repository\FailureRepository;
 use MessengerHistoryDashboard\Core\Repository\MessageMetadata;
-use MessengerHistoryDashboard\Core\Repository\MessagePresentationFormatter;
-use MessengerHistoryDashboard\Core\Repository\MessageRepository;
 use MessengerHistoryDashboard\Core\Repository\StateChangeContextRepository;
-use MessengerHistoryDashboard\Core\Repository\TransitionRepository;
 use MessengerHistoryDashboard\Core\Subscriber\StateChangeAuditSubscriber;
 use MessengerHistoryDashboard\Core\Service\MessageAuditWriter;
-use MessengerHistoryDashboard\Core\Service\PayloadSerializer;
-use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Shopware\Core\Checkout\Order\OrderStates;
 use Shopware\Core\Framework\Context;
@@ -35,54 +26,8 @@ use Symfony\Component\Messenger\Event\WorkerMessageReceivedEvent;
 use Symfony\Component\Messenger\MessageBus;
 use Symfony\Component\Messenger\Stamp\ReceivedStamp;
 
-final class MessengerLifecycleAuditTest extends TestCase
+final class MessengerLifecycleAuditTest extends AbstractSqliteRepositoryTestCase
 {
-    private Connection $connection;
-
-    protected function setUp(): void
-    {
-        $this->connection = DriverManager::getConnection([
-            'driver' => 'pdo_sqlite',
-            'memory' => true,
-        ]);
-
-        $this->connection->executeStatement(
-            'CREATE TABLE mh_message (
-                id VARCHAR(64) NOT NULL PRIMARY KEY,
-                message_class VARCHAR(255) NOT NULL,
-                source VARCHAR(32) NOT NULL DEFAULT "messenger",
-                subject_type VARCHAR(64) DEFAULT NULL,
-                subject_id VARCHAR(64) DEFAULT NULL,
-                correlation_id VARCHAR(64) DEFAULT NULL,
-                causation_id VARCHAR(64) DEFAULT NULL,
-                transport_name VARCHAR(255) DEFAULT NULL,
-                business_reference VARCHAR(255) DEFAULT NULL,
-                payload_json TEXT DEFAULT NULL,
-                status VARCHAR(32) NOT NULL,
-                retry_count INTEGER NOT NULL DEFAULT 0,
-                created_at DATETIME NOT NULL,
-                updated_at DATETIME NOT NULL
-            )'
-        );
-        $this->connection->executeStatement(
-            'CREATE TABLE mh_transition (
-                id VARCHAR(64) NOT NULL PRIMARY KEY,
-                message_id VARCHAR(64) NOT NULL,
-                event VARCHAR(64) NOT NULL,
-                created_at DATETIME NOT NULL
-            )'
-        );
-        $this->connection->executeStatement(
-            'CREATE TABLE mh_failure (
-                id VARCHAR(64) NOT NULL PRIMARY KEY,
-                message_id VARCHAR(64) NOT NULL,
-                exception_class VARCHAR(255) NOT NULL,
-                error_message TEXT NOT NULL,
-                created_at DATETIME NOT NULL
-            )'
-        );
-    }
-
     public function testDispatchAndHandledEventUpdateStoredStatus(): void
     {
         $writer = $this->createWriter();
@@ -293,12 +238,7 @@ final class MessengerLifecycleAuditTest extends TestCase
 
     private function createWriter(): MessageAuditWriter
     {
-        return new MessageAuditWriter(
-            new MessageRepository($this->connection, new OperatorActionPolicy(), new MessagePresentationFormatter()),
-            new TransitionRepository($this->connection),
-            new FailureRepository($this->connection),
-            new PayloadSerializer()
-        );
+        return $this->createMessageAuditWriter();
     }
 
     /**

@@ -11,6 +11,7 @@ final readonly class MessageListCriteria
         public ?string $query = null,
         public int $page = 1,
         public int $limit = 25,
+        public ?string $entryFilter = null,
         public ?string $topicGroup = null,
         public ?\DateTimeImmutable $createdFrom = null,
         public ?\DateTimeImmutable $createdTo = null,

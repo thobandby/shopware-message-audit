@@ -10,6 +10,7 @@ class MhDashboardApiService extends ApiService {
         searchTerm = '',
         page = 1,
         limit = 25,
+        entryFilter = '',
         topicGroup = '',
         createdFrom = '',
         createdTo = '',
@@ -29,6 +30,10 @@ class MhDashboardApiService extends ApiService {
 
         params.set('page', page);
         params.set('limit', limit);
+
+        if (entryFilter) {
+            params.set('entryFilter', entryFilter);
+        }
 
         if (topicGroup) {
             params.set('topicGroup', topicGroup);
@@ -107,10 +112,10 @@ class MhDashboardApiService extends ApiService {
         );
     }
 
-    cleanupMessages(days = 30) {
+    cleanupMessages(hours = 24) {
         return this.httpClient.post(
             '/_action/mh/messages/retention/cleanup',
-            { days },
+            { hours },
             { headers: this.getHeaders() }
         );
     }

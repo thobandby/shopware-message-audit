@@ -50,6 +50,11 @@
       "MessengerHistoryDashboard\\": "plugin/MessengerHistoryDashboard/src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Thorsten\\MessengerHistory\\Tests\\": "tests/"
+    }
+  },
   "config": {
     "allow-plugins": {
       "symfony/runtime": true,

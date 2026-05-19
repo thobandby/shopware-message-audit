@@ -18,10 +18,10 @@
             "overviewTitle": "Overview",
             "reload": "Reload",
             "metrics": {
-                "entries": "Entries",
-                "failed": "Failed messages",
-                "stateChanges": "State changes",
-                "payments": "Payment status"
+                "messenger24h": "Messenger (24h)",
+                "retries": "Retries",
+                "failed": "Failures",
+                "orderPaymentStates": "Order/payment status"
             },
             "entriesTitle": "Entries",
             "applyFilters": "Apply filters",
@@ -63,7 +63,7 @@
                 "causation": "Causation",
                 "transport": "Transport",
                 "status": "Status",
-                "retryCount": "Retries"
+                "retryCount": "Attempts"
             }
         },
         "filters": {
@@ -74,10 +74,18 @@
             "reference": "Business reference",
             "referencePlaceholder": "e.g. order number",
             "status": "Status",
+            "entryFilter": "Entries",
             "topicGroup": "Area",
             "transport": "Transport",
             "transportPlaceholder": "e.g. async",
             "timeRange": "Time range"
+        },
+        "entryFilters": {
+            "all": "All entries",
+            "shopwareMessenger": "Shopware Messenger (24h)",
+            "internalJobs": "Internal and custom jobs",
+            "orders": "Orders",
+            "payments": "Payments"
         },
         "topicGroups": {
             "all": "All areas",
@@ -100,10 +108,12 @@
             "90d": "Last 90 days"
         },
         "cleanupOptions": {
+            "1h": "Older than 1 hour",
+            "8h": "Older than 8 hours",
+            "24h": "Older than 24 hours",
+            "3d": "Older than 3 days",
             "7d": "Older than 7 days",
-            "30d": "Older than 30 days",
-            "90d": "Older than 90 days",
-            "180d": "Older than 180 days"
+            "30d": "Older than 30 days"
         },
         "pagination": {
             "perPage": "Per page"

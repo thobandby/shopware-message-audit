@@ -2,7 +2,7 @@
 
 ## Voraussetzungen
 
-- Shopware 6.6
+- Shopware 6.6+
 - PHP 8.2+
 - Messenger-Transport `async`
 - Admin-Benutzer mit Berechtigung `Plugins und Erweiterungen verwalten`
@@ -19,16 +19,16 @@ bin/console cache:clear
 
 Das Plugin ersetzt den Standard-Shopware-Messenger nicht. Es erweitert ihn nur um Audit- und Detailinformationen.
 
-Nach der Installation muss deshalb ein normaler Messenger-Worker laufen. Das Plugin bringt dafuer einen eigenen Startbefehl mit:
+Nach der Installation muss deshalb ein normaler Messenger-Worker laufen:
 
 ```bash
-bin/console mh:worker:consume
+bin/console messenger:consume async low_priority
 ```
 
 Fuer kurze Pruefungen lokal:
 
 ```bash
-bin/console mh:worker:consume --time-limit=5
+bin/console messenger:consume async low_priority --time-limit=5
 ```
 
 Fuer den Produktivbetrieb sollte der Worker dauerhaft ueber euren Prozessmanager laufen, zum Beispiel `systemd`, `supervisord` oder die Hosting-Mechanik eurer Shopware-Umgebung.
@@ -37,19 +37,6 @@ Fuer den Produktivbetrieb sollte der Worker dauerhaft ueber euren Prozessmanager
 
 - Aufruf im Admin unter `Einstellungen > Erweiterungen > Status Audit`
 - Wenn der Menueeintrag fehlt: Browser-Cache leeren, Admin neu laden und Rechte pruefen
-
-## Demo pruefen
-
-```bash
-bin/console mh:demo:seed
-bin/console mh:worker:consume --time-limit=5
-```
-
-Danach pruefen:
-
-- `GET /api/_action/mh/messages`
-- `GET /api/_action/mh/metrics`
-- Admin-Modul `Status Audit`
 
 ## Betrieb
 
@@ -63,6 +50,6 @@ Danach pruefen:
 - Keine Daten sichtbar:
   Messenger-Worker und Transport-Konfiguration pruefen.
 - Retry ohne Wirkung:
-  Sicherstellen, dass `mh:worker:consume` oder ein normaler Shopware-Messenger-Worker laeuft.
+  Sicherstellen, dass ein normaler Shopware-Messenger-Worker laeuft.
 - Menuepunkt fehlt:
   Browser-Cache loeschen, Administration neu laden, Benutzerrechte pruefen.

@@ -41,6 +41,33 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 mkdir -p "$TMP_DIR/$PLUGIN_NAME"
 cp -R "$PLUGIN_DIR"/. "$TMP_DIR/$PLUGIN_NAME/"
 rm -rf "$TMP_DIR/$PLUGIN_NAME/.git" "$TMP_DIR/$PLUGIN_NAME/node_modules"
+find "$TMP_DIR/$PLUGIN_NAME" -type f -name '*.map' -delete
+
+STORE_RELEASE_EXCLUDES=(
+    "src/Command/ConsumeWorkerCommand.php"
+    "src/Command/DebugDispatchCommand.php"
+    "src/Command/SeedBusinessDataCommand.php"
+    "src/Command/SeedDemoCommand.php"
+    "src/Core/Handler/SampleFailureMessageHandler.php"
+    "src/Core/Handler/SampleSuccessMessageHandler.php"
+    "src/Core/Message/SampleFailureMessage.php"
+    "src/Core/Message/SampleSuccessMessage.php"
+    "src/Core/Repository/BusinessOrderSeedRepository.php"
+)
+
+for relative_path in "${STORE_RELEASE_EXCLUDES[@]}"; do
+    rm -f "$TMP_DIR/$PLUGIN_NAME/$relative_path"
+done
+
+SERVICES_FILE="$TMP_DIR/$PLUGIN_NAME/src/Resources/config/services.xml"
+
+sed -i '/MessengerHistoryDashboard\\Core\\Repository\\BusinessOrderSeedRepository/d' "$SERVICES_FILE"
+sed -i '/<service id="MessengerHistoryDashboard\\Command\\SeedDemoCommand">/,/<\/service>/d' "$SERVICES_FILE"
+sed -i '/<service id="MessengerHistoryDashboard\\Command\\SeedBusinessDataCommand">/,/<\/service>/d' "$SERVICES_FILE"
+sed -i '/<service id="MessengerHistoryDashboard\\Command\\ConsumeWorkerCommand">/,/<\/service>/d' "$SERVICES_FILE"
+sed -i '/<service id="MessengerHistoryDashboard\\Command\\DebugDispatchCommand">/,/<\/service>/d' "$SERVICES_FILE"
+sed -i '/<service id="MessengerHistoryDashboard\\Core\\Handler\\SampleSuccessMessageHandler"\/>/d' "$SERVICES_FILE"
+sed -i '/<service id="MessengerHistoryDashboard\\Core\\Handler\\SampleFailureMessageHandler"\/>/d' "$SERVICES_FILE"
 
 rm -f "$ARCHIVE_PATH"
 
