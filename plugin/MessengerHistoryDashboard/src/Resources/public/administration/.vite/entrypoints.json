@@ -1,13 +1,15 @@
 {
-  "base": "/bundles/messengerhistorydashboard/administration/",
+  "base": "/bundles/bit_status_audit/administration/",
   "entryPoints": {
-    "messenger-history-dashboard": {
-      "css": [],
+    "bit-status-audit": {
+      "css": [
+        "/bundles/bit_status_audit/administration/assets/bit-status-audit-CAGkMLkq.css"
+      ],
       "dynamic": [
-        "/bundles/messengerhistorydashboard/administration/assets/index-M4f8anXa.js"
+        "/bundles/bit_status_audit/administration/assets/index-M4f8anXa.js"
       ],
       "js": [
-        "/bundles/messengerhistorydashboard/administration/assets/messenger-history-dashboard-Dw71CKkE.js"
+        "/bundles/bit_status_audit/administration/assets/bit-status-audit-CU2o5PFc.js"
       ],
       "legacy": false,
       "preload": []
