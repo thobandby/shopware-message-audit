@@ -3,6 +3,8 @@ set -euo pipefail
 
 PROJECT_DIR="${PROJECT_DIR:-shopware}"
 INSTALL_DEV_TOOLS="${INSTALL_DEV_TOOLS:-1}"
+PLUGIN_SRC="$(pwd)/plugin/MessengerHistoryDashboard"
+PLUGIN_DST="$(pwd)/$PROJECT_DIR/custom/plugins/MessengerHistoryDashboard"
 
 if [[ ! -d "$PROJECT_DIR" ]]; then
     echo "Shopware project directory not found: $PROJECT_DIR" >&2
@@ -38,5 +40,9 @@ bash ./scripts/install-plugin.sh
 
 cd "$PROJECT_DIR"
 make build-administration
+
+rm -rf "$PLUGIN_SRC/src/Resources/public/administration"
+mkdir -p "$PLUGIN_SRC/src/Resources/public"
+cp -R "$PLUGIN_DST/src/Resources/public/administration" "$PLUGIN_SRC/src/Resources/public/administration"
 
 echo "Administration build completed."

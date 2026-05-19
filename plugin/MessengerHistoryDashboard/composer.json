@@ -15,11 +15,12 @@
   ],
   "autoload": {
     "psr-4": {
-      "MessengerHistoryDashboard\\": "src/"
+      "MessengerHistoryDashboard\\": "src/",
+      "bit_status_audit\\": "src/"
     }
   },
   "extra": {
-    "shopware-plugin-class": "MessengerHistoryDashboard\\MessengerHistoryDashboard",
+    "shopware-plugin-class": "bit_status_audit\\bit_status_audit",
     "label": {
       "de-DE": "Status Audit",
       "en-GB": "Status Audit"

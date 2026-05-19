@@ -3,8 +3,8 @@ set -euo pipefail
 
 PLUGIN_DIR="${PLUGIN_DIR:-plugin/MessengerHistoryDashboard}"
 DIST_DIR="${DIST_DIR:-dist}"
-PLUGIN_NAME="MessengerHistoryDashboard"
-BUILD_ADMIN="${BUILD_ADMIN:-0}"
+PLUGIN_NAME="${PLUGIN_NAME:-bit_status_audit}"
+BUILD_ADMIN="${BUILD_ADMIN:-1}"
 
 if [[ ! -d "$PLUGIN_DIR" ]]; then
     echo "Plugin directory not found: $PLUGIN_DIR" >&2

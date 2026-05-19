@@ -11,6 +11,7 @@ use MessengerHistoryDashboard\Core\Operator\OperatorActionPolicy;
 final class MessageRepository
 {
     private const DATETIME_FORMAT = 'Y-m-d H:i:s';
+    private ?bool $auditSchemaAvailable = null;
 
     public function __construct(
         private readonly Connection $connection,
@@ -33,6 +34,16 @@ final class MessageRepository
     {
         $page = max(1, $criteria->page);
         $limit = max(1, min(100, $criteria->limit));
+
+        if (! $this->hasAuditSchema()) {
+            return [
+                'data' => [],
+                'total' => 0,
+                'page' => $page,
+                'limit' => $limit,
+            ];
+        }
+
         $offset = ($page - 1) * $limit;
 
         $baseSql = <<<'SQL'
@@ -81,6 +92,10 @@ SQL;
 
     public function find(string $id, string $locale = 'de-DE'): array|false
     {
+        if (! $this->hasAuditSchema()) {
+            return false;
+        }
+
         $row = $this->connection->fetchAssociative(
             'SELECT id, message_class, source, subject_type, subject_id, correlation_id, causation_id, transport_name, business_reference, payload_json, status, retry_count, created_at, updated_at
              FROM mh_message
@@ -100,6 +115,10 @@ SQL;
      */
     public function findRelatedStateChangesByBusinessReference(string $businessReference, string $locale = 'de-DE'): array
     {
+        if (! $this->hasAuditSchema()) {
+            return [];
+        }
+
         $rows = $this->connection->fetchAllAssociative(
             'SELECT id, message_class, source, subject_type, subject_id, correlation_id, causation_id, transport_name, business_reference, payload_json, status, retry_count, created_at, updated_at
              FROM mh_message
@@ -119,6 +138,10 @@ SQL;
      */
     public function findRelatedMessengerLifecycle(string $messageClass, \DateTimeImmutable $createdAt, string $locale = 'de-DE'): array
     {
+        if (! $this->hasAuditSchema()) {
+            return [];
+        }
+
         $bucketStart = $createdAt->setTime(
             (int) $createdAt->format('H'),
             (int) $createdAt->format('i'),
@@ -149,6 +172,10 @@ SQL;
 
     public function insertIfMissing(string $id, string $class, string $payloadJson, string $status, MessageMetadata $metadata): void
     {
+        if (! $this->hasAuditSchema()) {
+            return;
+        }
+
         if ($this->connection->fetchOne('SELECT id FROM mh_message WHERE id = :id', ['id' => $id]) !== false) {
             return;
         }
@@ -174,6 +201,10 @@ SQL;
 
     public function updateStatus(string $id, string $status): void
     {
+        if (! $this->hasAuditSchema()) {
+            return;
+        }
+
         $this->connection->update('mh_message', [
             'status' => $status,
             'updated_at' => (new \DateTimeImmutable())->format(self::DATETIME_FORMAT),
@@ -182,6 +213,10 @@ SQL;
 
     public function incrementRetryCount(string $id): void
     {
+        if (! $this->hasAuditSchema()) {
+            return;
+        }
+
         $this->connection->executeStatement(
             'UPDATE mh_message SET retry_count = retry_count + 1, updated_at = :updatedAt WHERE id = :id',
             ['id' => $id, 'updatedAt' => (new \DateTimeImmutable())->format(self::DATETIME_FORMAT)]
@@ -190,6 +225,10 @@ SQL;
 
     public function syncRetryCount(string $id, int $retryCount): void
     {
+        if (! $this->hasAuditSchema()) {
+            return;
+        }
+
         $this->connection->executeStatement(
             'UPDATE mh_message
              SET retry_count = CASE WHEN retry_count > :retryCount THEN retry_count ELSE :retryCount END,
@@ -205,6 +244,10 @@ SQL;
 
     public function updateMetadata(string $id, MessageMetadata $metadata): void
     {
+        if (! $this->hasAuditSchema()) {
+            return;
+        }
+
         $updates = ['updated_at' => (new \DateTimeImmutable())->format(self::DATETIME_FORMAT)];
 
         if ($metadata->correlationId !== null && $metadata->correlationId !== '') {
@@ -247,6 +290,15 @@ SQL;
      */
     public function metrics(): array
     {
+        if (! $this->hasAuditSchema()) {
+            return [
+                'messenger_24h' => 0,
+                'retries' => 0,
+                'failures' => 0,
+                'order_payment_states' => 0,
+            ];
+        }
+
         $messengerCutoff = $this->whereClauseBuilder->createUtc24HourCutoff();
 
         return [
@@ -296,6 +348,10 @@ SQL;
 
     public function cleanupShopwareMessengerEntriesOlderThan24Hours(): int
     {
+        if (! $this->hasAuditSchema()) {
+            return 0;
+        }
+
         $messengerCutoff = $this->whereClauseBuilder->createUtc24HourCutoff();
 
         $messageIds = $this->connection->fetchFirstColumn(
@@ -351,6 +407,15 @@ SQL;
      */
     public function cleanupOlderThan(\DateTimeImmutable $cutoff): array
     {
+        if (! $this->hasAuditSchema()) {
+            return [
+                'messages' => 0,
+                'transitions' => 0,
+                'failures' => 0,
+                'actions' => 0,
+            ];
+        }
+
         $formattedCutoff = $cutoff->format(self::DATETIME_FORMAT);
 
         $messages = (int) $this->connection->fetchOne(
@@ -411,6 +476,17 @@ SQL;
             'failures' => $failures,
             'actions' => $actions,
         ];
+    }
+
+    public function hasAuditSchema(): bool
+    {
+        if ($this->auditSchemaAvailable !== null) {
+            return $this->auditSchemaAvailable;
+        }
+
+        return $this->auditSchemaAvailable = $this->connection
+            ->createSchemaManager()
+            ->tablesExist(['mh_message', 'mh_transition', 'mh_failure', 'mh_operator_action']);
     }
 
     /**

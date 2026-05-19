@@ -26,6 +26,10 @@ final class MessageAuditWriter
 
     public function onDispatched(string $uuid, object $message, Envelope $envelope): void
     {
+        if (! $this->messageRepository->hasAuditSchema()) {
+            return;
+        }
+
         $this->ensureMessageExists($uuid, $message, 'dispatched', $envelope);
 
         $this->transitionRepository->insert($uuid, 'dispatched');
@@ -33,6 +37,10 @@ final class MessageAuditWriter
 
     public function onReceived(string $uuid, Envelope $envelope): void
     {
+        if (! $this->messageRepository->hasAuditSchema()) {
+            return;
+        }
+
         $this->ensureMessageExists($uuid, $envelope->getMessage(), 'received', $envelope);
         $this->messageRepository->updateStatus($uuid, 'received');
         $this->messageRepository->syncRetryCount($uuid, $this->resolveRetryCount($envelope));
@@ -42,6 +50,10 @@ final class MessageAuditWriter
 
     public function onHandled(string $uuid, Envelope $envelope): void
     {
+        if (! $this->messageRepository->hasAuditSchema()) {
+            return;
+        }
+
         $this->ensureMessageExists($uuid, $envelope->getMessage(), 'handled', $envelope);
         $this->messageRepository->updateStatus($uuid, 'handled');
         $this->messageRepository->syncRetryCount($uuid, $this->resolveRetryCount($envelope));
@@ -52,6 +64,10 @@ final class MessageAuditWriter
 
     public function onFailed(string $uuid, Envelope $envelope, \Throwable $exception): void
     {
+        if (! $this->messageRepository->hasAuditSchema()) {
+            return;
+        }
+
         $this->ensureMessageExists($uuid, $envelope->getMessage(), 'failed', $envelope);
         $this->messageRepository->updateStatus($uuid, 'failed');
         $this->messageRepository->syncRetryCount($uuid, $this->resolveRetryCount($envelope));
@@ -62,6 +78,10 @@ final class MessageAuditWriter
 
     public function recordRetry(string $messageId): void
     {
+        if (! $this->messageRepository->hasAuditSchema()) {
+            return;
+        }
+
         $this->transitionRepository->insert($messageId, 'retry_now');
     }
 
@@ -76,6 +96,10 @@ final class MessageAuditWriter
         MessageMetadata $metadata,
         string $transitionEvent
     ): void {
+        if (! $this->messageRepository->hasAuditSchema()) {
+            return;
+        }
+
         $this->messageRepository->insertIfMissing(
             $id,
             $entryClass,

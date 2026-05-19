@@ -18,6 +18,7 @@ return [
     ],
     'exclude' => [
         'bin',
+        'bit_status_audit.php',
         'public',
         'shopware',
         'var',

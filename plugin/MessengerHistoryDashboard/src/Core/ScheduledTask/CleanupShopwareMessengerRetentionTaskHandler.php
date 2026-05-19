@@ -27,6 +27,10 @@ final class CleanupShopwareMessengerRetentionTaskHandler extends ScheduledTaskHa
 
     public function run(): void
     {
+        if (! $this->messageRepository->hasAuditSchema()) {
+            return;
+        }
+
         $this->messageRepository->cleanupShopwareMessengerEntriesOlderThan24Hours();
     }
 }
